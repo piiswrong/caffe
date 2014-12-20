@@ -36,7 +36,7 @@ class CrossLossLayerTest : public MultiDeviceTest<TypeParam> {
     blob_bottom_vec_.push_back(blob_bottom_rnd_);
     blob_top_vec_.push_back(blob_top_loss_);
   }
-  virtual ~EuclideanLossLayerTest() {
+  virtual ~CrossLossLayerTest() {
     delete blob_bottom_fg_;
     delete blob_bottom_bg_;
     delete blob_bottom_rnd_;
