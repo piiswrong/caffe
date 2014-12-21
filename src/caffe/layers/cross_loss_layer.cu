@@ -8,17 +8,17 @@
 namespace caffe {
 
 template <typename Dtype>
-void EuclideanLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+void CrossLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     vector<Blob<Dtype>*>* top) {
   Forward_cpu(bottom, top); 
 }
 
 template <typename Dtype>
-void EuclideanLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
+void CrossLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
   Backward_cpu(top, propagate_down, bottom);
 }
 
-INSTANTIATE_CLASS(EuclideanLossLayer);
+INSTANTIATE_CLASS(CrossLossLayer);
 
 }  // namespace caffe

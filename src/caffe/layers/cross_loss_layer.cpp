@@ -50,7 +50,7 @@ void CrossLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   for (int i = 0; i < num; i++) {
     Dtype acc = Dtype(0);
     acc += caffe_cpu_dot(dim, data_fg_bg + i*dim, data_fg_bg + i*dim);
-    acc -= caffe_cpu_dot(dim, data_fg_rnd_ + i*dim, data_fg_rnd_ + i*dim);
+    acc -= caffe_cpu_dot(dim, data_fg_rnd + i*dim, data_fg_rnd + i*dim);
     acc = acc / dim + margin;
     output[i] = acc;
     loss += acc > Dtype(0) ? acc : Dtype(0);
@@ -63,13 +63,13 @@ void CrossLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void CrossLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
-  int count = bottom[0]->count();
-  int num = bottom[0]->num();
+  int count = (*bottom)[0]->count();
+  int num = (*bottom)[0]->num();
   int dim = count/num;
-  Dtype weight = top[0]->cpu_diff() / count;
+  Dtype weight = top[0]->cpu_diff()[0] / count;
   Dtype *output = output_.mutable_cpu_data();
   if ( propagate_down[0] ) {
-    Dtype *bottom_diff = bottom[0]->mutable_cpu_diff();
+    Dtype *bottom_diff = (*bottom)[0]->mutable_cpu_diff();
     caffe_sub(
       count,
       diff_fg_bg_.cpu_data(),
@@ -81,15 +81,15 @@ void CrossLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     }
   }
   if ( propagate_down[1] ) {
-    Dtype *bottom_diff = bottom[1]->mutable_cpu_diff();
-    Dtype *data_fg_bg = diff_fg_bg_.cpu_data();
+    Dtype *bottom_diff = (*bottom)[1]->mutable_cpu_diff();
+    const Dtype *data_fg_bg = diff_fg_bg_.cpu_data();
     for (int i = 0; i < num; i++) {
       caffe_cpu_scale(dim, -(output[i] > 0)*weight, data_fg_bg + i*dim, bottom_diff + i*dim);
     }
   }
   if ( propagate_down[2] ) {
-    Dtype *bottom_diff = bottom[2]->mutable_cpu_diff();
-    Dtype *data_fg_rnd = diff_fg_rnd_.cpu_data();
+    Dtype *bottom_diff = (*bottom)[2]->mutable_cpu_diff();
+    const Dtype *data_fg_rnd = diff_fg_rnd_.cpu_data();
     for (int i = 0; i < num; i++) {
       caffe_cpu_scale(dim, (output[i] > 0)*weight, data_fg_rnd + i*dim, bottom_diff + i*dim);
     }

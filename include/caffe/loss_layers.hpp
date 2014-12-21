@@ -306,7 +306,7 @@ template <typename Dtype>
 class CrossLossLayer : public LossLayer<Dtype> {
  public:
   explicit CrossLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param), diff_() {}
+      : LossLayer<Dtype>(param), diff_fg_bg_(), diff_fg_rnd_() {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
