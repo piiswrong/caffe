@@ -11,12 +11,10 @@ template <typename Dtype>
 void CrossLossLayer<Dtype>::Reshape(
   const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
   LossLayer<Dtype>::Reshape(bottom, top);
-  CHECK_EQ(bottom[0]->channels(), bottom[1]->channels());
-  CHECK_EQ(bottom[2]->channels(), bottom[1]->channels());
-  CHECK_EQ(bottom[0]->height(), bottom[1]->height());
-  CHECK_EQ(bottom[2]->height(), bottom[1]->height());
-  CHECK_EQ(bottom[0]->width(), bottom[1]->width());
-  CHECK_EQ(bottom[2]->width(), bottom[1]->width());
+  CHECK_EQ(bottom[0]->channels()*bottom[0]->height()*bottom[0]->width(),
+           bottom[1]->channels()*bottom[1]->height()*bottom[1]->width());
+  CHECK_EQ(bottom[2]->channels()*bottom[2]->height()*bottom[2]->width(),
+           bottom[1]->channels()*bottom[1]->height()*bottom[1]->width());
   diff_fg_bg_.Reshape(bottom[0]->num(), bottom[0]->channels(),
       bottom[0]->height(), bottom[0]->width());
   diff_fg_rnd_.Reshape(bottom[0]->num(), bottom[0]->channels(),
