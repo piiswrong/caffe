@@ -165,7 +165,7 @@ ifneq ($(CPU_ONLY), 1)
 	LIBRARY_DIRS += $(CUDA_LIB_DIR)
 	LIBRARIES := cudart cublas curand
 endif
-LIBRARIES += iomp5 glog gflags protobuf leveldb snappy \
+LIBRARIES += glog gflags protobuf leveldb snappy \
 	lmdb \
 	boost_system \
 	hdf5_hl hdf5 \
@@ -247,7 +247,7 @@ ifeq ($(OSX), 1)
 		LINKFLAGS += -stdlib=libstdc++
 	endif
 	# boost::thread is called boost_thread-mt to mark multithreading on OS X
-	LIBRARIES += boost_thread-mt
+	LIBRARIES += boost_thread
 endif
 
 # Custom compiler

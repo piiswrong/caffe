@@ -581,10 +581,12 @@ void Net<Dtype>::ForwardDebugInfo(const int layer_id) {
   for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
     const Blob<Dtype>& blob = *top_vecs_[layer_id][top_id];
     const string& blob_name = blob_names_[top_id_vecs_[layer_id][top_id]];
-    const Dtype data_abs_val_mean = blob.asum_data() / blob.count();
+    Dtype min, max, mean, std;
+    blob.stat_data(&min, &max, &mean, &std); 
     LOG(INFO) << "    [Forward] "
        << "Layer " << layer_names_[layer_id] << ", top blob " << blob_name
-       << " data: " << data_abs_val_mean;
+       << " data: ";
+    LOG(INFO) << "    [Forward]" << " min:" << min << " max:" << max << " mean:" << mean << " std:" << std;
   }
 }
 
@@ -595,19 +597,23 @@ void Net<Dtype>::BackwardDebugInfo(const int layer_id) {
     if (!bottom_need_backward_[layer_id][bottom_id]) { continue; }
     const Blob<Dtype>& blob = *bottom_vec[bottom_id];
     const string& blob_name = blob_names_[bottom_id_vecs_[layer_id][bottom_id]];
-    const Dtype diff_abs_val_mean = blob.asum_diff() / blob.count();
+    Dtype min, max, mean, std;
+    blob.stat_data(&min, &max, &mean, &std); 
     LOG(INFO) << "    [Backward] "
         << "Layer " << layer_names_[layer_id] << ", bottom blob " << blob_name
-        << " diff: " << diff_abs_val_mean;
+        << " diff: "; 
+    LOG(INFO) << "    [Backward]" << " min:" << min << " max:" << max << " mean:" << mean << " std:" << std;
   }
   for (int param_id = 0; param_id < layers_[layer_id]->blobs().size();
        ++param_id) {
     if (!layers_[layer_id]->param_propagate_down(param_id)) { continue; }
     const Blob<Dtype>& blob = *layers_[layer_id]->blobs()[param_id];
-    const Dtype diff_abs_val_mean = blob.asum_diff() / blob.count();
+    Dtype min, max, mean, std;
+    blob.stat_data(&min, &max, &mean, &std); 
     LOG(INFO) << "    [Backward] "
         << "Layer " << layer_names_[layer_id] << ", param blob " << param_id
-        << " diff: " << diff_abs_val_mean;
+        << " diff: ";
+    LOG(INFO) << "    [Backward]" << " min:" << min << " max:" << max << " mean:" << mean << " std:" << std;
   }
 }
 
