@@ -1,6 +1,8 @@
 #include <string>
 #include <vector>
 
+#include <fstream>
+
 #include "caffe/data_layers.hpp"
 #include "caffe/util/io.hpp"
 
@@ -94,11 +96,76 @@ void BasePrefetchingDataLayer<Dtype>::Forward_cpu(
   CreatePrefetchThread();
 }
 
+template <typename Dtype>
+void BaseShufflingDataLayer<Dtype>::LayerSetUp(
+    const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
+  BaseDataLayer<Dtype>::LayerSetUp(bottom, top);
+  // Now, start the prefetch thread. Before calling prefetch, we make two
+  // cpu_data calls so that the prefetch thread does not accidentally make
+  // simultaneous cudaMalloc calls when the main thread is running. In some
+  // GPUs this seems to cause failures if we do not so.
+  this->prefetch_data_[0].mutable_cpu_data();
+  this->prefetch_data_[1].mutable_cpu_data();
+  if (this->output_labels_) {
+    this->prefetch_label_[0].mutable_cpu_data();
+    this->prefetch_label_[1].mutable_cpu_data();
+  }
+
+  current_buffer_ = 0;
+  current_row_ = this->prefetch_data_[0].num();
+  DLOG(INFO) << "Initializing prefetch";
+  this->CreatePrefetchThread();
+  DLOG(INFO) << "Prefetch initialized.";
+}
+
+template <typename Dtype>
+void BaseShufflingDataLayer<Dtype>::CreatePrefetchThread() {
+  this->phase_ = Caffe::phase();
+  this->data_transformer_.InitRand();
+  CHECK(StartInternalThread()) << "Thread execution failed";
+}
+
+template <typename Dtype>
+void BaseShufflingDataLayer<Dtype>::JoinPrefetchThread() {
+  CHECK(WaitForInternalThreadToExit()) << "Thread joining failed";
+}
+
+template <typename Dtype>
+void BaseShufflingDataLayer<Dtype>::Forward_cpu(
+    const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
+  int batch_size = this->layer_param_.shuffling_data_param().batch_size();
+  int offset = 0;
+  int N = prefetch_data_[current_buffer_].num();
+  int dim = prefetch_data_[current_buffer_].count() / N;
+  while (batch_size - offset) {
+    if (current_row_ == N) {
+      JoinPrefetchThread();
+      current_row_ = 0;
+      current_buffer_ = 1 - current_buffer_;
+      CreatePrefetchThread();
+    }
+    int avail = std::min(batch_size-offset, N - current_row_);
+    caffe_copy(avail * dim, prefetch_data_[current_buffer_].cpu_data() + 
+               prefetch_data_[current_buffer_].offset(current_row_),
+               (*top)[0]->mutable_cpu_data() + (*top)[0]->offset(offset));
+    if (this->output_labels_) {
+      dim = prefetch_label_[current_buffer_].count() / N;
+      caffe_copy(avail * dim, prefetch_label_[current_buffer_].cpu_data() + 
+                  prefetch_label_[current_buffer_].offset(current_row_),
+                 (*top)[1]->mutable_cpu_data() + (*top)[1]->offset(offset));
+    }
+    current_row_ += avail;
+    offset += avail;
+  }
+}
+
 #ifdef CPU_ONLY
 STUB_GPU_FORWARD(BasePrefetchingDataLayer, Forward);
+STUB_GPU_FORWARD(BaseShufflingDataLayer, Forward);
 #endif
 
 INSTANTIATE_CLASS(BaseDataLayer);
 INSTANTIATE_CLASS(BasePrefetchingDataLayer);
+INSTANTIATE_CLASS(BaseShufflingDataLayer);
 
 }  // namespace caffe

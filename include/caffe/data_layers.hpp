@@ -96,6 +96,36 @@ class BasePrefetchingDataLayer :
 };
 
 template <typename Dtype>
+class BaseShufflingDataLayer :
+    public BaseDataLayer<Dtype>, public InternalThread {
+ public:
+  explicit BaseShufflingDataLayer(const LayerParameter& param)
+      : BaseDataLayer<Dtype>(param) {}
+  virtual ~BaseShufflingDataLayer() {}
+  // LayerSetUp: implements common data layer setup functionality, and calls
+  // DataLayerSetUp to do special data layer setup for individual layer types.
+  // This method may not be overridden.
+  void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual void CreatePrefetchThread();
+  virtual void JoinPrefetchThread();
+  // The thread's function
+  virtual void InternalThreadEntry() {}
+
+ protected:
+  int current_buffer_;
+  int current_row_;
+  Blob<Dtype> prefetch_data_[2];
+  Blob<Dtype> prefetch_label_[2];
+};
+
+template <typename Dtype>
 class DataLayer : public BasePrefetchingDataLayer<Dtype> {
  public:
   explicit DataLayer(const LayerParameter& param)
@@ -106,6 +136,37 @@ class DataLayer : public BasePrefetchingDataLayer<Dtype> {
 
   virtual inline LayerParameter_LayerType type() const {
     return LayerParameter_LayerType_DATA;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return 2; }
+
+ protected:
+  virtual void InternalThreadEntry();
+
+  // LEVELDB
+  shared_ptr<leveldb::DB> db_;
+  shared_ptr<leveldb::Iterator> iter_;
+  // LMDB
+  MDB_env* mdb_env_;
+  MDB_dbi mdb_dbi_;
+  MDB_txn* mdb_txn_;
+  MDB_cursor* mdb_cursor_;
+  MDB_val mdb_key_, mdb_value_;
+};
+
+
+template <typename Dtype>
+class ShufflingDataLayer : public BaseShufflingDataLayer<Dtype> {
+ public:
+  explicit ShufflingDataLayer(const LayerParameter& param)
+      : BaseShufflingDataLayer<Dtype>(param) {}
+  virtual ~ShufflingDataLayer();
+  virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_SHUFFLING_DATA;
   }
   virtual inline int ExactNumBottomBlobs() const { return 0; }
   virtual inline int MinTopBlobs() const { return 1; }

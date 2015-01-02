@@ -1,4 +1,4 @@
-#include <string>
+ #include <string>
 
 #include "caffe/layer.hpp"
 #include "caffe/proto/caffe.pb.h"
@@ -195,6 +195,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return GetConvolutionLayer<Dtype>(name, param);
   case LayerParameter_LayerType_DATA:
     return new DataLayer<Dtype>(param);
+  case LayerParameter_LayerType_SHUFFLING_DATA:
+    return new ShufflingDataLayer<Dtype>(param);
   case LayerParameter_LayerType_DROPOUT:
     return new DropoutLayer<Dtype>(param);
   case LayerParameter_LayerType_DUMMY_DATA:
