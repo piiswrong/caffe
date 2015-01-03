@@ -165,9 +165,10 @@ ifneq ($(CPU_ONLY), 1)
 	LIBRARY_DIRS += $(CUDA_LIB_DIR)
 	LIBRARIES := cudart cublas curand
 endif
-LIBRARIES += iomp5 glog gflags protobuf leveldb snappy \
+LIBRARIES += glog gflags protobuf leveldb snappy \
 	lmdb \
 	boost_system \
+	boost_filesystem \
 	hdf5_hl hdf5 \
 	opencv_core opencv_highgui opencv_imgproc pthread 
 PYTHON_LIBRARIES := boost_python python2.7
