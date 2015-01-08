@@ -3,8 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
 
 #include "caffe/common.hpp"
 #include "caffe/data_layers.hpp"
@@ -45,22 +43,9 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     leveldb::Options options = GetLevelDBOptions();
     options.create_if_missing = false;
     LOG(INFO) << "Opening leveldb " << this->layer_param_.data_param().source();
-
-    std::string str_tmp_db;
-    MakeTempDir(&str_tmp_db);
-    LOG(INFO) << "Creating tmp read only database " << str_tmp_db;
-    fs::path path_tmp_db(str_tmp_db);
-    for (fs::directory_iterator iter(this->layer_param_.data_param().source()); iter != fs::directory_iterator(); ++iter) {
-      if (iter->path().filename() != "LOCK") {
-        fs::create_symlink(iter->path(), path_tmp_db / iter->path().filename());
-      }
-    }
-    std::ofstream lock_file( (path_tmp_db/"LOCK").string().c_str() );
-    lock_file.close();
-
-
+    std::remove((this->layer_param_.data_param().source() + "/LOCK").c_str());
     leveldb::Status status = leveldb::DB::Open(
-        options, path_tmp_db.native(), &db_temp);
+        options, this->layer_param_.data_param().source(), &db_temp);
     CHECK(status.ok()) << "Failed to open leveldb "
                        << this->layer_param_.data_param().source() << std::endl
                        << status.ToString();
