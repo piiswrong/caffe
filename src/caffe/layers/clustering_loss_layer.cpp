@@ -8,12 +8,14 @@
 namespace caffe {
 
 template <typename Dtype>
-void ClusteringLossLayer<Dtype>::LayerSetup(
+void ClusteringLossLayer<Dtype>::LayerSetUp(
       const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
-  LossLayer<Dtype>::LayerSetup(bottom, top);
+  LossLayer<Dtype>::LayerSetUp(bottom, top);
   CHECK_EQ(bottom[0]->num()%TILE_DIM, 0) << "Only support" 
     "batch sizes that are multiples of " << TILE_DIM << ".";
   N_ = this->layer_param_.clustering_loss_param().num_center();
+  lambda_ = this->layer_param_.clustering_loss_param().lambda();
+  margin_ = this->layer_param_.clustering_loss_param().margin();
   CHECK_EQ(N_%TILE_DIM, 0) << "Only support" 
     "center numbers that are multiples of " << TILE_DIM << ".";
   K_ = bottom[0]->count() / bottom[0]->num();
@@ -23,7 +25,7 @@ void ClusteringLossLayer<Dtype>::LayerSetup(
     LOG(INFO) << "Skipping parameter initialization";
   } else {
     this->blobs_.resize(1);
-    this->blobs_[0].reset(new Blob<Dtype>(1, 1, N_, K_));
+    this->blobs_[0].reset(new Blob<Dtype>(1, 1, K_, N_));
 
     shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
         this->layer_param_.clustering_loss_param().weight_filler()));
@@ -32,13 +34,15 @@ void ClusteringLossLayer<Dtype>::LayerSetup(
 
   }  // parameter initialization
   this->param_propagate_down_.resize(this->blobs_.size(), true);
-
 }
 
 template <typename Dtype>
 void ClusteringLossLayer<Dtype>::Reshape(
   const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
   LossLayer<Dtype>::Reshape(bottom, top);
+  if (top->size() == 2) {
+    (*top)[1]->Reshape(bottom[0]->num(), 1, 1, 1);
+  }
   CHECK_EQ(bottom[0]->num(), bottom[1]->num())
       << "The data and label should have the same number.";
   CHECK_EQ(bottom[1]->channels(), 1);
@@ -50,24 +54,23 @@ void ClusteringLossLayer<Dtype>::Reshape(
   distance_.Reshape(bottom[0]->num(), 1, 1, N_);
   mask_.Reshape(bottom[0]->num(), 1, 1, N_);
   min_distance_.Reshape(bottom[0]->num(), 1, 1, 1);
+  coef_.Reshape(bottom[0]->num(), 1, 1, 1);
 }
 
 template <typename Dtype>
 void ClusteringLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     vector<Blob<Dtype>*>* top) {
-
 }
 
 template <typename Dtype>
 void ClusteringLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
-
 }
 
 #ifdef CPU_ONLY
-STUB_GPU(CrossLossLayer);
+STUB_GPU(ClusteringLossLayer);
 #endif
 
-INSTANTIATE_CLASS(CrossLossLayer);
+INSTANTIATE_CLASS(ClusteringLossLayer);
 
 }  // namespace caffe

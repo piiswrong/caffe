@@ -255,6 +255,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new WindowDataLayer<Dtype>(param);
   case LayerParameter_LayerType_CROSS_LOSS:
     return new CrossLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_CLUSTERING_LOSS:
+    return new ClusteringLossLayer<Dtype>(param);
   case LayerParameter_LayerType_NONE:
     LOG(FATAL) << "Layer " << name << " has unspecified type.";
   default:

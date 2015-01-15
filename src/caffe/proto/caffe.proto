@@ -198,7 +198,7 @@ message NetStateRule {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available ID: 43 (last added: shuffling_data_param)
+// LayerParameter next available ID: 44 (last added: clustering_loss_param)
 message LayerParameter {
   repeated string bottom = 2; // the name of the bottom blobs
   repeated string top = 3; // the name of the top blobs
@@ -219,7 +219,7 @@ message LayerParameter {
   // line above the enum. Update the next available ID when you add a new
   // LayerType.
   //
-  // LayerType next available ID: 40 (last added: SHUFFLING_DATA)
+  // LayerType next available ID: 41 (last added: CLUSTERING_LOSS)
   enum LayerType {
     // "NONE" layer type is 0th enum element so that we don't cause confusion
     // by defaulting to an existent LayerType (instead, should usually error if
@@ -264,6 +264,7 @@ message LayerParameter {
     THRESHOLD = 31;
     CROSS_LOSS = 38;
     SHUFFLING_DATA = 39;
+    CLUSTERING_LOSS = 40;
   }
   optional LayerType type = 5; // the layer type from the enum above
 
@@ -321,6 +322,7 @@ message LayerParameter {
   optional WindowDataParameter window_data_param = 20;
   optional CrossLossParameter cross_loss_param = 41;
   optional ShufflingDataParameter shuffling_data_param = 42;
+  optional ClusteringLossParameter clustering_loss_param = 43;
 
   // Parameters for data pre-processing.
   optional TransformationParameter transform_param = 36;
@@ -575,6 +577,14 @@ message InnerProductParameter {
   optional bool bias_term = 2 [default = true]; // whether to have bias terms
   optional FillerParameter weight_filler = 3; // The filler for the weight
   optional FillerParameter bias_filler = 4; // The filler for the bias
+}
+
+// Message that stores parameters used by ClusteringLossLayer
+message ClusteringLossParameter {
+  optional uint32 num_center = 1 [default = 128]; // The number of outputs for the layer
+  optional float lambda = 2 [default = 0.5];
+  optional float margin = 3 [default = 1.0];
+  optional FillerParameter weight_filler = 4; // The filler for the weight
 }
 
 // Message that stores parameters used by LRNLayer

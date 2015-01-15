@@ -351,9 +351,14 @@ class ClusteringLossLayer : public LossLayer<Dtype> {
       vector<Blob<Dtype>*>* top);
 
   virtual inline int ExactNumBottomBlobs() const { return 2; }
+  virtual inline int ExactNumTopBlobs() const { return -1; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return 2; }
   virtual inline LayerParameter_LayerType type() const {
     return LayerParameter_LayerType_CLUSTERING_LOSS;
   }
+
+  Blob<Dtype> *distance() { return &distance_; }
 
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
@@ -366,8 +371,17 @@ class ClusteringLossLayer : public LossLayer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
 
+  static const int TILE_DIM = 32;
+
+  int N_, K_;
+
+  Dtype lambda_;
+  Dtype margin_;
+
   Blob<Dtype> distance_;
+  Blob<Dtype> min_distance_;
   Blob<Dtype> mask_;
+  Blob<Dtype> coef_;
 
 };
 
