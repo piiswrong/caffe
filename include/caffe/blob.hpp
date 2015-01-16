@@ -108,9 +108,9 @@ class Blob {
   Dtype asum_diff() const;
 
   /// @brief Compute the statistics of the data.
-  void stat_data(Dtype *min, Dtype *max, Dtype *mean, Dtype *std) const;
+  string stat_data(Dtype *min = NULL, Dtype *max = NULL, Dtype *mean = NULL, Dtype *std = NULL) const;
   /// @brief Compute the statistics of the diff.
-  void stat_diff(Dtype *min, Dtype *max, Dtype *mean, Dtype *std) const;
+  string stat_diff(Dtype *min = NULL, Dtype *max = NULL, Dtype *mean = NULL, Dtype *std = NULL) const;
 
   /**
    * @brief Set the data_ shared_ptr to point to the SyncedMemory holding the

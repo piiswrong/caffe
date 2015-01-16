@@ -351,9 +351,7 @@ class ClusteringLossLayer : public LossLayer<Dtype> {
       vector<Blob<Dtype>*>* top);
 
   virtual inline int ExactNumBottomBlobs() const { return 2; }
-  virtual inline int ExactNumTopBlobs() const { return -1; }
-  virtual inline int MinTopBlobs() const { return 1; }
-  virtual inline int MaxTopBlobs() const { return 2; }
+  virtual inline int ExactNumTopBlobs() const { return 4; }
   virtual inline LayerParameter_LayerType type() const {
     return LayerParameter_LayerType_CLUSTERING_LOSS;
   }
@@ -376,12 +374,13 @@ class ClusteringLossLayer : public LossLayer<Dtype> {
   int N_, K_;
 
   Dtype lambda_;
-  Dtype margin_;
+  
 
   Blob<Dtype> distance_;
-  Blob<Dtype> min_distance_;
   Blob<Dtype> mask_;
   Blob<Dtype> coef_;
+  Blob<Dtype> margin_;
+  Blob<Dtype> count_;
 
 };
 

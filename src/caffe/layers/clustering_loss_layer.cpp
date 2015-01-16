@@ -15,7 +15,6 @@ void ClusteringLossLayer<Dtype>::LayerSetUp(
     "batch sizes that are multiples of " << TILE_DIM << ".";
   N_ = this->layer_param_.clustering_loss_param().num_center();
   lambda_ = this->layer_param_.clustering_loss_param().lambda();
-  margin_ = this->layer_param_.clustering_loss_param().margin();
   CHECK_EQ(N_%TILE_DIM, 0) << "Only support" 
     "center numbers that are multiples of " << TILE_DIM << ".";
   K_ = bottom[0]->count() / bottom[0]->num();
@@ -33,6 +32,12 @@ void ClusteringLossLayer<Dtype>::LayerSetUp(
 
 
   }  // parameter initialization
+  FillerParameter filler_param;
+  filler_param.set_value(this->layer_param_.clustering_loss_param().margin());
+  ConstantFiller<Dtype> margin_filler(filler_param);
+  margin_.Reshape(1, 1, 1, N_);
+  margin_filler.Fill(&margin_);
+
   this->param_propagate_down_.resize(this->blobs_.size(), true);
 }
 
@@ -40,21 +45,28 @@ template <typename Dtype>
 void ClusteringLossLayer<Dtype>::Reshape(
   const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
   LossLayer<Dtype>::Reshape(bottom, top);
-  if (top->size() == 2) {
-    (*top)[1]->Reshape(bottom[0]->num(), 1, 1, 1);
-  }
+  (*top)[1]->Reshape(1, 1, 1, 1);
+  if (this->layer_param_.loss_weight_size() == 1)
+    this->layer_param_.add_loss_weight(Dtype(0));
+  (*top)[2]->Reshape(bottom[0]->num(), 1, 1, 1);
+  if (this->layer_param_.loss_weight_size() == 2)
+    this->layer_param_.add_loss_weight(Dtype(0));
+  (*top)[3]->Reshape(bottom[0]->num(), 1, 1, 1);
+  if (this->layer_param_.loss_weight_size() == 3)
+    this->layer_param_.add_loss_weight(Dtype(0));
+
   CHECK_EQ(bottom[0]->num(), bottom[1]->num())
       << "The data and label should have the same number.";
   CHECK_EQ(bottom[1]->channels(), 1);
   CHECK_EQ(bottom[1]->height(), 1);
   CHECK_EQ(bottom[1]->width(), 1);
   CHECK_EQ(bottom[0]->count() / bottom[0]->num(), K_) << "Input size "
-    "incompatible with inner product parameters.";
+    "incompatible with clustering loss parameters.";
 
   distance_.Reshape(bottom[0]->num(), 1, 1, N_);
   mask_.Reshape(bottom[0]->num(), 1, 1, N_);
-  min_distance_.Reshape(bottom[0]->num(), 1, 1, 1);
   coef_.Reshape(bottom[0]->num(), 1, 1, 1);
+  count_.Reshape(1, 1, 1, N_);
 }
 
 template <typename Dtype>

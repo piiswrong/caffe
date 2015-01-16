@@ -206,7 +206,7 @@ Dtype Blob<Dtype>::asum_diff() const {
 }
 
 template <typename Dtype>
-void Blob<Dtype>::stat_data(Dtype *min, Dtype *max, Dtype *mean, Dtype *std) const {
+string Blob<Dtype>::stat_data(Dtype *min, Dtype *max, Dtype *mean, Dtype *std) const {
   const Dtype *data = cpu_data();
   Dtype mymax = data[0], mymin = data[0], mymean = Dtype(0), mystd = Dtype(0);
   for (int i = 0; i < count_; ++i) {
@@ -215,14 +215,18 @@ void Blob<Dtype>::stat_data(Dtype *min, Dtype *max, Dtype *mean, Dtype *std) con
     mymean += data[i];
     mystd += data[i]*data[i];
   }
-  *min = mymin;
-  *max = mymax;
-  *mean = mymean / count_;
-  *std = std::sqrt(mystd / count_ - (*mean)*(*mean));
+  if (min) *min = mymin;
+  if (max) *max = mymax;
+  if (mean) *mean = mymean / count_;
+  if (std) *std = std::sqrt(mystd / count_ - (mymean / count_)*(mymean / count_));
+  stringstream str;
+  str << "min: " << mymin << " max: " << mymax << " mean: " <<  mymean / count_ 
+      << " std: " << std::sqrt(mystd / count_ - (mymean / count_)*(mymean / count_));
+  return str.str();
 }
 
 template <typename Dtype>
-void Blob<Dtype>::stat_diff(Dtype *min, Dtype *max, Dtype *mean, Dtype *std) const {
+string Blob<Dtype>::stat_diff(Dtype *min, Dtype *max, Dtype *mean, Dtype *std) const {
   const Dtype *data = cpu_diff();
   Dtype mymax = data[0], mymin = data[0], mymean = Dtype(0), mystd = Dtype(0);
   for (int i = 0; i < count_; ++i) {
@@ -231,10 +235,14 @@ void Blob<Dtype>::stat_diff(Dtype *min, Dtype *max, Dtype *mean, Dtype *std) con
     mymean += data[i];
     mystd += data[i]*data[i];
   }
-  *min = mymin;
-  *max = mymax;
-  *mean = mymean / count_;
-  *std = std::sqrt(mystd / count_ - (*mean)*(*mean));
+  if (min) *min = mymin;
+  if (max) *max = mymax;
+  if (mean) *mean = mymean / count_;
+  if (std) *std = std::sqrt(mystd / count_ - (mymean / count_)*(mymean / count_));
+  stringstream str;
+  str << "min: " << mymin << " max: " << mymax << " mean: " <<  mymean / count_ 
+      << " std: " << std::sqrt(mystd / count_ - (mymean / count_)*(mymean / count_));
+  return str.str();
 }
 
 
