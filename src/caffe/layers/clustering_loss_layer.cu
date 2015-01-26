@@ -53,30 +53,30 @@ void ClusteringLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   for (int i = 0; i < N_; i++) cpu_count[i] = Dtype(0);
 
 	for (int i = 0; i < bottom[0]->num(); ++i) {
-		Dtype min = cpu_distance[i*N_];
+		Dtype min = cpu_distance[i*N_]/cpu_margin[0];
 		int ind = 0;
 		for (int j = 0; j < N_; ++j) {
-			if (min > cpu_distance[i*N_ + j]) {
+			if (min > cpu_distance[i*N_ + j]/cpu_margin[j]) {
 				ind = j;
-				min = cpu_distance[i*N_ + j];
+				min = cpu_distance[i*N_ + j]/cpu_margin[j];
 			}
 			cpu_mask[i*N_ + j] = Dtype(0);
 		}
+    Dtype y = cpu_label[i];
 		cpu_mask[i*N_ + ind] = Dtype(1);
     cpu_ind[i] = Dtype(ind); 
-    cpu_count[ind] += Dtype(1);
+    cpu_count[ind] += (Dtype(1)-y);
 		cpu_min_distance[i] = min;
 
-		Dtype y = cpu_label[i];
-		loss += (lambda_ * y * std::min(min, cpu_margin[ind]) + (Dtype(1) - lambda_)*(Dtype(1) - y)*std::max(cpu_margin[ind]-min, Dtype(0)))/Dtype(2)/bottom[0]->num();
+		loss += (lambda_ * y * std::min(min, Dtype(1)) + (Dtype(1) - lambda_)*(Dtype(1) - y)*std::max(Dtype(1)-min, Dtype(0)))/Dtype(2)/bottom[0]->num();
 
-		Dtype sign = min < cpu_margin[ind];
-		cpu_coef[i] = (lambda_*y*sign/(min + Dtype(1e-8)) - (Dtype(1) - lambda_)*(Dtype(1) - y)*sign/(min + Dtype(1e-8)))/Dtype(2)/bottom[0]->num();
+		Dtype sign = min < Dtype(1);
+		cpu_coef[i] = (lambda_*y*sign/(min + Dtype(1e-8)) - (Dtype(1) - lambda_)*(Dtype(1) - y)*sign/(min + Dtype(1e-8)))/(cpu_margin[ind]*cpu_margin[ind]*Dtype(2)*bottom[0]->num());
 	}
 	(*top)[0]->mutable_cpu_data()[0] = loss;
   Dtype std = Dtype(0);
   for (int i = 0; i < N_; i++) std += cpu_count[i]*cpu_count[i];
-  (*top)[1]->mutable_cpu_data()[0] = std/N_ - (Dtype(bottom[0]->num())/N_)*(Dtype(bottom[0]->num())/N_);
+  (*top)[1]->mutable_cpu_data()[0] = std/N_ - (Dtype(bottom[0]->num())/Dtype(2)/N_)*(Dtype(bottom[0]->num())/Dtype(2)/N_);
 	//std::cout << "loss:" << loss << std::endl;
 	//std::cout << "coef:" << coef_.asum_data()/coef_.count() << std::endl;
   std::cout << "margin: " << margin_.stat_data() << std::endl;
@@ -108,8 +108,8 @@ void ClusteringLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   Dtype *cpu_margin = margin_.mutable_cpu_data();
   const Dtype *cpu_count = count_.cpu_data();
   for (int i = 0; i < N_; i++) {
-    cpu_margin[i] += 0.01 * ((Dtype((*bottom)[0]->num())/N_) - cpu_count[i]);
-    if (cpu_margin[i] < Dtype(0)) cpu_margin[i] = Dtype(0);
+    cpu_margin[i] *= 1+0.1*((Dtype((*bottom)[0]->num())/Dtype(2)/N_) - cpu_count[i]);
+    if (cpu_margin[i] < Dtype(1e-4)) cpu_margin[i] = Dtype(1e-4);
   }
 }
 

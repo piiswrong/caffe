@@ -72,11 +72,13 @@ void ClusteringLossLayer<Dtype>::Reshape(
 template <typename Dtype>
 void ClusteringLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     vector<Blob<Dtype>*>* top) {
+  LOG(ERROR) << "Forward_cpu not implemented.";
 }
 
 template <typename Dtype>
 void ClusteringLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
+  LOG(ERROR) << "Backward_cpu not implemented.";
 }
 
 #ifdef CPU_ONLY

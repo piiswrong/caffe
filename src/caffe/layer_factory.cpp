@@ -257,6 +257,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new CrossLossLayer<Dtype>(param);
   case LayerParameter_LayerType_CLUSTERING_LOSS:
     return new ClusteringLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_SPRING_LOSS:
+    return new SpringLossLayer<Dtype>(param);
   case LayerParameter_LayerType_NONE:
     LOG(FATAL) << "Layer " << name << " has unspecified type.";
   default:
