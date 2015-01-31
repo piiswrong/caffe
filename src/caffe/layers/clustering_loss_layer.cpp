@@ -23,22 +23,22 @@ void ClusteringLossLayer<Dtype>::LayerSetUp(
   if (this->blobs_.size() > 0) {
     LOG(INFO) << "Skipping parameter initialization";
   } else {
-    this->blobs_.resize(1);
+    this->blobs_.resize(2);
     this->blobs_[0].reset(new Blob<Dtype>(1, 1, K_, N_));
+    this->blobs_[1].reset(new Blob<Dtype>(1, 1, 1, N_));
 
     shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
         this->layer_param_.clustering_loss_param().weight_filler()));
     weight_filler->Fill(this->blobs_[0].get());
 
-
+    FillerParameter filler_param;
+    filler_param.set_value(this->layer_param_.clustering_loss_param().margin());
+    ConstantFiller<Dtype> margin_filler(filler_param);
+    margin_filler.Fill(this->blobs_[1].get());
   }  // parameter initialization
-  FillerParameter filler_param;
-  filler_param.set_value(this->layer_param_.clustering_loss_param().margin());
-  ConstantFiller<Dtype> margin_filler(filler_param);
-  margin_.Reshape(1, 1, 1, N_);
-  margin_filler.Fill(&margin_);
 
-  this->param_propagate_down_.resize(this->blobs_.size(), true);
+  this->param_propagate_down_.resize(this->blobs_.size(), false);
+  this->param_propagate_down_[0] = true;
 }
 
 template <typename Dtype>
@@ -65,7 +65,8 @@ void ClusteringLossLayer<Dtype>::Reshape(
 
   distance_.Reshape(bottom[0]->num(), 1, 1, N_);
   mask_.Reshape(bottom[0]->num(), 1, 1, N_);
-  coef_.Reshape(bottom[0]->num(), 1, 1, 1);
+  coefm_.Reshape(bottom[0]->num(), 1, 1, 1);
+  coefn_.Reshape(N_, 1, 1, 1);
   count_.Reshape(1, 1, 1, N_);
 }
 

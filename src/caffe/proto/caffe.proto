@@ -590,6 +590,7 @@ message ClusteringLossParameter {
   optional uint32 num_center = 1 [default = 128]; // The number of outputs for the layer
   optional float lambda = 2 [default = 0.5];
   optional float margin = 3 [default = 1.0];
+  optional float beta = 5 [default = 1.0];
   optional FillerParameter weight_filler = 4; // The filler for the weight
 }
 

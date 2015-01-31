@@ -65,6 +65,20 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
 }
 
 template <>
+void caffe_gpu_dgmm<double>(const CBLAS_SIDE mode, int M, int N, const double *A,
+    const double *x, double *C) {
+  cublasSideMode_t cuSideA = (mode == CblasLeft) ? CUBLAS_SIDE_RIGHT : CUBLAS_SIDE_LEFT;
+  CUBLAS_CHECK(cublasDdgmm(Caffe::cublas_handle(), cuSideA, N, M, A, N, x, 1, C, N));
+}
+
+template <>
+void caffe_gpu_dgmm<float>(const CBLAS_SIDE mode, int M, int N, const float *A,
+    const float *x, float *C) {
+  cublasSideMode_t cuSideA = (mode == CblasLeft) ? CUBLAS_SIDE_RIGHT : CUBLAS_SIDE_LEFT;
+  CUBLAS_CHECK(cublasSdgmm(Caffe::cublas_handle(), cuSideA, N, M, A, N, x, 1, C, N));
+}
+
+template <>
 void caffe_gpu_axpy<float>(const int N, const float alpha, const float* X,
     float* Y) {
   CUBLAS_CHECK(cublasSaxpy(Caffe::cublas_handle(), N, &alpha, X, 1, Y, 1));

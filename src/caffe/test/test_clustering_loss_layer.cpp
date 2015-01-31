@@ -193,7 +193,7 @@ TYPED_TEST(ClusteringLossLayerTest, TestGradient) {
     data[i*dim + i] += Dtype(1.0);
   }
 
-  GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
+  GradientChecker<Dtype> checker(1e-2, 1e-4, 1701);
   checker.CheckGradientSingle(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_), 0, 0, 0);
 }

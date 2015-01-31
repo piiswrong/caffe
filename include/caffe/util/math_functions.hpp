@@ -25,6 +25,7 @@ void caffe_cpu_gemv(const CBLAS_TRANSPOSE TransA, const int M, const int N,
     const Dtype alpha, const Dtype* A, const Dtype* x, const Dtype beta,
     Dtype* y);
 
+
 template <typename Dtype>
 void caffe_axpy(const int N, const Dtype alpha, const Dtype* X,
     Dtype* Y);
@@ -162,6 +163,10 @@ template <typename Dtype>
 void caffe_gpu_gemv(const CBLAS_TRANSPOSE TransA, const int M, const int N,
     const Dtype alpha, const Dtype* A, const Dtype* x, const Dtype beta,
     Dtype* y);
+
+template <typename Dtype>
+void caffe_gpu_dgmm(const CBLAS_SIDE mode, int M, int N, const Dtype *A,
+    const Dtype *x, Dtype *C);
 
 template <typename Dtype>
 void caffe_gpu_axpy(const int N, const Dtype alpha, const Dtype* X,
