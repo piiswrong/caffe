@@ -45,17 +45,22 @@ void SpringLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   Dtype *cpu_diff_fg_rnd = diff_fg_rnd_.mutable_cpu_data();
 
   Dtype loss = Dtype(0);
+  Dtype pos_loss = Dtype(0);
+  Dtype neg_loss = Dtype(0);
   for (int i = 0; i < num; i++) {
     Dtype dist_fg_bg = caffe_cpu_dot(dim, cpu_diff_fg_bg + i*dim, cpu_diff_fg_bg + i*dim) / dim;
     Dtype dist_fg_rnd = caffe_cpu_dot(dim, cpu_diff_fg_rnd + i*dim, cpu_diff_fg_rnd + i*dim) / dim;
     Dtype coef = margin > dist_fg_rnd;
     caffe_scal(dim, coef, cpu_diff_fg_rnd + i*dim);
     loss += dist_fg_bg + (margin - dist_fg_rnd)*coef;
+    pos_loss += dist_fg_bg;
+    neg_loss += (margin - dist_fg_rnd)*coef;
   }
   
   
   loss = loss / bottom[0]->num() / Dtype(2);
   (*top)[0]->mutable_cpu_data()[0] = loss;
+  std::cout << "pos:" << pos_loss << " neg:" << neg_loss << std::endl;
 }
 
 template <typename Dtype>
