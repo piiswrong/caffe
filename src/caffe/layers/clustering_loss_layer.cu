@@ -51,6 +51,7 @@ void ClusteringLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   dim3 block(TILE_DIM, TILE_DIM, 1);
   distance_kernel<Dtype, ClusteringLossLayer<Dtype>::TILE_DIM><<<grid, block>>>(bottom[0]->gpu_data(),
    this->blobs_[0]->gpu_data(), distance_.mutable_gpu_data(), bottom[0]->num(), N_, K_);
+  CUDA_POST_KERNEL_CHECK;
 
 	//std::cout << "distance: " << distance_.asum_data()/distance_.count() << std::endl;
 
@@ -63,58 +64,87 @@ void ClusteringLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   Dtype *cpu_coefn = coefn_.mutable_cpu_data();
   Dtype *cpu_ind = (*top)[2]->mutable_cpu_data();
   Dtype *cpu_count = count_.mutable_cpu_data();
+  Dtype *cpu_coef_margin = coef_margin_.mutable_cpu_data();
+
+  Dtype beta = this->layer_param_.clustering_loss_param().beta();
 
 	Dtype loss = Dtype(0);
-  for (int i = 0; i < N_; i++) {
-    cpu_count[i] = Dtype(0);
-    cpu_coefn[i] = Dtype(0);
+  caffe_memset(N_*sizeof(Dtype), 0, cpu_count);
+  caffe_memset(N_*sizeof(Dtype), 0, cpu_coefn);
+  caffe_memset(N_*sizeof(Dtype), 0, cpu_coef_margin);
+
+  for (int j = 0; j < N_; ++j) if (cpu_margin[j] < Dtype(1.0)) cpu_margin[j] = Dtype(1.0);
+
+  for (int i = 0; i < bottom[0]->num(); ++i) {
+    int y = (int)cpu_label[i];
+    if (y == 0) {
+      for (int j = 0; j < N_; ++j) {
+        Dtype d = cpu_distance[i*N_ + j]/cpu_margin[j];
+        if (d < Dtype(1)) {
+          cpu_count[j] += Dtype(1)-d;
+        }
+      }
+    }
   }
+  for (int j = 0; j < N_; ++j) cpu_count[j] = cpu_count[j]/bottom[0]->num()/beta - Dtype(1);
 
 	for (int i = 0; i < bottom[0]->num(); ++i) {
-    Dtype sum = Dtype(0);
-		int ind = 0;
-    Dtype y = cpu_label[i];
+    int y = (int)cpu_label[i];
     cpu_coefm[i] = Dtype(0);
 		for (int j = 0; j < N_; ++j) {
-      Dtype sign = Dtype(0);
       Dtype d = cpu_distance[i*N_ + j]/cpu_margin[j];
-			if (d < Dtype(1)) {
-				sign = Dtype(1);
-        cpu_count[j] += (Dtype(1)-y) * sign * (Dtype(1)-d);
-			}
-			cpu_mask[i*N_ + j] = (lambda_*y - (Dtype(1)-lambda_)*(Dtype(1)-y))*sign/((cpu_distance[i*N_ + j] + Dtype(1e-10))*cpu_margin[ind]*bottom[0]->num());
+		  Dtype sign = d < Dtype(1);	
+      cpu_ind[i*N_ + j] = sign*(Dtype(1)-y);
+      cpu_min_distance[i*N_ + j] = d;
+      if (y == 1) {
+        cpu_mask[i*N_ + j] = lambda_*sign / (cpu_distance[i*N_ + j]*cpu_margin[j]);
+        loss += lambda_ * y * std::min(d, Dtype(1));
+        cpu_coef_margin[j] += -lambda_*sign*d/cpu_margin[j];
+      }else {
+        cpu_mask[i*N_ + j] = - (Dtype(1)-lambda_)*cpu_count[j]*sign / (beta*cpu_distance[i*N_ + j]*cpu_margin[j]);
+        cpu_coef_margin[j] += (Dtype(1)-lambda_)*sign*cpu_count[j]*d/(beta*cpu_margin[j]);
+      }
       cpu_coefm[i] += cpu_mask[i*N_ + j];
       cpu_coefn[j] += cpu_mask[i*N_ + j];
-      loss += (lambda_ * y * std::min(d, Dtype(1)) + (Dtype(1)-lambda_)*(Dtype(1)-y)*std::max(Dtype(1)-d, Dtype(0)))/bottom[0]->num();
 		}
   }
-	(*top)[0]->mutable_cpu_data()[0] = loss;
-  Dtype std = Dtype(0);
-  Dtype mean = Dtype(0);
-  for (int i = 0; i < N_; i++) { 
-    std += cpu_count[i]*cpu_count[i];
-    mean += cpu_count[i];
+
+  loss /= bottom[0]->num();
+  std::cout << "pos: " << loss;
+  Dtype tt = loss;
+
+  for (int j = 0; j < N_; ++j) {
+    loss += (Dtype(1)-lambda_)*cpu_count[j]*cpu_count[j]/Dtype(2);
   }
-  std /= N_;
-  mean /= N_;
-  (*top)[1]->mutable_cpu_data()[0] = std::sqrt(std - mean*mean)/mean;
+  std::cout << " neg: " << loss - tt << std::endl;
+	(*top)[0]->mutable_cpu_data()[0] = loss;
+
+  Dtype count_std;
+  count_.stat_data(NULL, NULL, NULL, &count_std);
+  (*top)[1]->mutable_cpu_data()[0] = count_std;
+
+
   std::cout << "margin: " << this->blobs_[1]->stat_data() << std::endl;
   std::cout << "count: " << count_.stat_data() << std::endl;
   std::cout << "dist: " << distance_.stat_data() << std::endl;
+  std::cout << "dist/m: " << (*top)[3]->stat_data() << std::endl;
   std::cout << "mask: " << mask_.stat_data() << std::endl;
-  std::cout << "coefn: " << coefn_.stat_data() << std::endl;
+  std::cout << "ind: " << (*top)[2]->stat_data() << std::endl;
+  //std::cout << "coefn: " << coefn_.stat_data() << std::endl;
+  //std::cout << "margin_diff: " << coef_margin_.stat_data() << std::endl;
+
 }
 
 template <typename Dtype>
 void ClusteringLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
-  Dtype weight = top[0]->cpu_diff()[0]/K_;		
+  Dtype weight = top[0]->cpu_diff()[0]/K_/(*bottom)[0]->num();		
   if (propagate_down[0]) {
     caffe_gpu_dgmm(CblasLeft, (*bottom)[0]->num(), K_, (*bottom)[0]->gpu_data(),
       coefm_.gpu_data(), (*bottom)[0]->mutable_gpu_diff());
     caffe_gpu_gemm(CblasNoTrans, CblasTrans, mask_.num(), K_, N_, -weight, 
       mask_.gpu_data(), this->blobs_[0]->gpu_data(), weight, (*bottom)[0]->mutable_gpu_diff());
-    //LOG(INFO) << "bottom diff:" << (*bottom)[0]->asum_diff()/(*bottom)[0]->count();
+    LOG(INFO) << "bottom diff:" << (*bottom)[0]->stat_diff();
   }
   
   if (this->param_propagate_down_[0]) {
@@ -122,16 +152,14 @@ void ClusteringLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   	caffe_gpu_gemm(CblasTrans, CblasNoTrans, K_, N_, mask_.num(), -weight, 
   		(*bottom)[0]->gpu_data(), mask_.gpu_data(), weight, this->blobs_[0]->mutable_gpu_diff());
     //std::cout << "diff: " <<  this->blobs_[0]->stat_diff() << std::endl;
-    //LOG(INFO) << "center diff:" << this->blobs_[0]->asum_diff()/this->blobs_[0]->count();
+    LOG(INFO) << "center diff:" << this->blobs_[0]->stat_diff();
   }
   
-  Dtype *cpu_margin = this->blobs_[1]->mutable_cpu_data();
-  const Dtype *cpu_count = count_.cpu_data();
-  const Dtype beta = this->layer_param_.clustering_loss_param().beta();
-  for (int i = 0; i < N_; i++) {
-    cpu_margin[i] -= 0.1 * (cpu_count[i] - beta);
-    if (cpu_margin[i] < Dtype(1e-4)) cpu_margin[i] = Dtype(1e-4);
-  }
+  if (this->param_propagate_down_[1]) {
+    caffe_copy(coef_margin_.count(), coef_margin_.cpu_data(), this->blobs_[1]->mutable_gpu_diff());
+    caffe_gpu_scal(coef_margin_.count(), top[0]->cpu_diff()[0]/(*bottom)[0]->num(), this->blobs_[1]->mutable_gpu_diff());
+    LOG(INFO) << "center diff:" << this->blobs_[1]->stat_diff();
+  } 
 }
 
 INSTANTIATE_CLASS(ClusteringLossLayer);
