@@ -259,6 +259,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new ClusteringLossLayer<Dtype>(param);
   case LayerParameter_LayerType_SPRING_LOSS:
     return new SpringLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_KMEANS_LOSS:
+    return new KmeansLossLayer<Dtype>(param);
   case LayerParameter_LayerType_NONE:
     LOG(FATAL) << "Layer " << name << " has unspecified type.";
   default:

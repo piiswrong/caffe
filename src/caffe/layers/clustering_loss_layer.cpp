@@ -69,6 +69,7 @@ void ClusteringLossLayer<Dtype>::Reshape(
   coefm_.Reshape(bottom[0]->num(), 1, 1, 1);
   coefn_.Reshape(N_, 1, 1, 1);
   count_.Reshape(1, 1, 1, N_);
+  pos_count_.Reshape(bottom[0]->num(), 1, 1, 1);
 }
 
 template <typename Dtype>

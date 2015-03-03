@@ -413,6 +413,7 @@ class ClusteringLossLayer : public LossLayer<Dtype> {
   Blob<Dtype> coefn_;
   Blob<Dtype> coef_margin_;
   Blob<Dtype> count_;
+  Blob<Dtype> pos_count_;
 
 };
 
