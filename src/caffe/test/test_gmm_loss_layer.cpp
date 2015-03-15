@@ -18,11 +18,11 @@ namespace caffe {
 const int dim = 100;
 
 template <typename TypeParam>
-class KmeansLossLayerTest : public MultiDeviceTest<TypeParam> {
+class GMMLossLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
 
  protected:
-  KmeansLossLayerTest()
+  GMMLossLayerTest()
       : blob_bottom_data_(new Blob<Dtype>(dim, 1, 1, dim)),
         blob_bottom_label_(new Blob<Dtype>(dim, 1, 1, 1)),
         blob_top_loss_(new Blob<Dtype>()),
@@ -44,7 +44,7 @@ class KmeansLossLayerTest : public MultiDeviceTest<TypeParam> {
     blob_top_vec_.push_back(blob_top_ind_);
     blob_top_vec_.push_back(blob_top_dist_);
   }
-  virtual ~KmeansLossLayerTest() {
+  virtual ~GMMLossLayerTest() {
     delete blob_bottom_data_;
     delete blob_bottom_label_;
     delete blob_top_loss_;
@@ -57,9 +57,9 @@ class KmeansLossLayerTest : public MultiDeviceTest<TypeParam> {
     // Get the loss without a specified objective weight -- should be
     // equivalent to explicitly specifiying a weight of 1.
     LayerParameter layer_param;
-    layer_param.mutable_kmeans_loss_param()->set_beta(10);
-    layer_param.mutable_kmeans_loss_param()->set_num_center(dim);
-    KmeansLossLayer<Dtype> layer_weight_1(layer_param);
+    layer_param.mutable_gmm_loss_param()->set_beta(10);
+    layer_param.mutable_gmm_loss_param()->set_num_center(dim);
+    GMMLossLayer<Dtype> layer_weight_1(layer_param);
     layer_weight_1.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
     layer_weight_1.Forward(this->blob_bottom_vec_, &this->blob_top_vec_);
 
@@ -74,10 +74,10 @@ class KmeansLossLayerTest : public MultiDeviceTest<TypeParam> {
     // scaled appropriately.
     const Dtype kLossWeight = 3.7;
     LayerParameter layer_param2;
-    layer_param2.mutable_kmeans_loss_param()->set_beta(10);
-    layer_param2.mutable_kmeans_loss_param()->set_num_center(dim);
+    layer_param2.mutable_gmm_loss_param()->set_beta(10);
+    layer_param2.mutable_gmm_loss_param()->set_num_center(dim);
     layer_param2.add_loss_weight(kLossWeight);
-    KmeansLossLayer<Dtype> layer_weight_2(layer_param2);
+    GMMLossLayer<Dtype> layer_weight_2(layer_param2);
     layer_weight_2.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
     layer_weight_2.Forward(this->blob_bottom_vec_, &this->blob_top_vec_);
 
@@ -92,7 +92,7 @@ class KmeansLossLayerTest : public MultiDeviceTest<TypeParam> {
     const Dtype kNonTrivialAbsThresh = 1e-1;
     EXPECT_GE(fabs(loss_weight_1), kNonTrivialAbsThresh);
 
-    int m = dim, n = layer_param.kmeans_loss_param().num_center(), p = dim;
+    int m = dim, n = layer_param.gmm_loss_param().num_center(), p = dim;
     Blob<Dtype> *distance = layer_weight_1.distance();
     const Dtype *cpu_data = blob_bottom_data_->cpu_data();
     const Dtype *cpu_dist = distance->cpu_data();
@@ -118,23 +118,23 @@ class KmeansLossLayerTest : public MultiDeviceTest<TypeParam> {
   vector<Blob<Dtype>*> blob_top_vec_;
 };
 
-TYPED_TEST_CASE(KmeansLossLayerTest, TestDtypesAndDevices);
+TYPED_TEST_CASE(GMMLossLayerTest, TestDtypesAndDevices);
 
-TYPED_TEST(KmeansLossLayerTest, TestForward) {
+TYPED_TEST(GMMLossLayerTest, TestForward) {
   this->TestForward();
 }
 
-TYPED_TEST(KmeansLossLayerTest, TestGradient) {
+TYPED_TEST(GMMLossLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   const Dtype kLossWeight = 1.0;
   layer_param.add_loss_weight(kLossWeight);
-  layer_param.mutable_kmeans_loss_param()->set_beta(10);
-  layer_param.mutable_kmeans_loss_param()->set_num_center(dim);
-  layer_param.mutable_kmeans_loss_param()->set_lambda(1);
+  layer_param.mutable_gmm_loss_param()->set_beta(10);
+  layer_param.mutable_gmm_loss_param()->set_num_center(dim);
+  layer_param.mutable_gmm_loss_param()->set_lambda(1);
 
   
-  KmeansLossLayer<Dtype> layer(layer_param);
+  GMMLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
   layer.Forward(this->blob_bottom_vec_, &this->blob_top_vec_);
 
@@ -143,7 +143,7 @@ TYPED_TEST(KmeansLossLayerTest, TestGradient) {
   filler.Fill(this->blob_bottom_data_);
   filler.Fill(layer.blobs()[0].get());
 
-  GradientChecker<Dtype> checker(1e-1, 5e-2, 1701);
+  GradientChecker<Dtype> checker(1e-1, 1e-3, 1701);
   checker.CheckGradientSingle(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_), 0, 0, 0);
 }

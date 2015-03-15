@@ -83,6 +83,7 @@ int main(int argc, char** argv) {
   sum_blob.set_channels(datum.channels());
   sum_blob.set_height(datum.height());
   sum_blob.set_width(datum.width());
+  LOG(ERROR) << "Data dimensions: " << datum.channels() << "*" << datum.height() << "*" << datum.width();
   const int data_size = datum.channels() * datum.height() * datum.width();
   int size_in_datum = std::max<int>(datum.data().size(),
                                     datum.float_data_size());

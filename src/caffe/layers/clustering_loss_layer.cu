@@ -8,7 +8,7 @@
 namespace caffe {
 
 template<typename Dtype, int TILE_DIM>
-__global__ void distance_kernel(const Dtype *x, const Dtype *y, Dtype *z, int m, int n, int p) {
+__global__ void cluster_distance_kernel(const Dtype *x, const Dtype *y, Dtype *z, int m, int n, int p) {
     __shared__ Dtype sx[TILE_DIM][TILE_DIM+1];
     __shared__ Dtype sy[TILE_DIM][TILE_DIM+1];
 
@@ -49,7 +49,7 @@ void ClusteringLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     vector<Blob<Dtype>*>* top) {
   dim3 grid(N_/TILE_DIM, bottom[0]->num()/TILE_DIM, 1);
   dim3 block(TILE_DIM, TILE_DIM, 1);
-  distance_kernel<Dtype, ClusteringLossLayer<Dtype>::TILE_DIM><<<grid, block>>>(bottom[0]->gpu_data(),
+  cluster_distance_kernel<Dtype, ClusteringLossLayer<Dtype>::TILE_DIM><<<grid, block>>>(bottom[0]->gpu_data(),
    this->blobs_[0]->gpu_data(), distance_.mutable_gpu_data(), bottom[0]->num(), N_, K_);
   CUDA_POST_KERNEL_CHECK;
 

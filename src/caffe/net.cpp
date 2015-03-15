@@ -232,9 +232,11 @@ void Net<Dtype>::FilterNet(const NetParameter& param,
     switch (Caffe::phase()) {
       case Caffe::TRAIN:
         net_state.set_phase(TRAIN);
+        //std::cout << "TRAIN" << std::endl;
         break;
       case Caffe::TEST:
         net_state.set_phase(TEST);
+        //std::cout << "TEST" << std::endl;
         break;
       default:
         LOG(FATAL) << "Unknown phase: " << Caffe::phase();

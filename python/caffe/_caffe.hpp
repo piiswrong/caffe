@@ -110,11 +110,11 @@ class PyNet {
   }
 
   // The caffe::Caffe utility functions.
-  void set_mode_cpu() { Caffe::set_mode(Caffe::CPU); }
-  void set_mode_gpu() { Caffe::set_mode(Caffe::GPU); }
-  void set_phase_train() { Caffe::set_phase(Caffe::TRAIN); }
-  void set_phase_test() { Caffe::set_phase(Caffe::TEST); }
-  void set_device(int device_id) { Caffe::SetDevice(device_id); }
+  static void set_mode_cpu() { Caffe::set_mode(Caffe::CPU); }
+  static void set_mode_gpu() { Caffe::set_mode(Caffe::GPU); }
+  static void set_phase_train() { Caffe::set_phase(Caffe::TRAIN); }
+  static void set_phase_test() { Caffe::set_phase(Caffe::TEST); }
+  static void set_device(int device_id) { Caffe::SetDevice(device_id); }
 
   vector<PyBlob<float> > blobs() {
     return vector<PyBlob<float> >(net_->blobs().begin(), net_->blobs().end());

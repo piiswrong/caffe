@@ -261,6 +261,10 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new SpringLossLayer<Dtype>(param);
   case LayerParameter_LayerType_KMEANS_LOSS:
     return new KmeansLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_GMM_LOSS:
+    return new GMMLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_MULTI_SOFTMAX_LOSS:
+    return new MultiSoftmaxLossLayer<Dtype>(param);
   case LayerParameter_LayerType_NONE:
     LOG(FATAL) << "Layer " << name << " has unspecified type.";
   default:
