@@ -18,6 +18,10 @@ namespace leveldb {
 struct Options;
 }
 
+namespace cv {
+  class Mat;
+}
+
 namespace caffe {
 
 using ::google::protobuf::Message;
@@ -101,6 +105,9 @@ inline bool ReadImageToDatum(const string& filename, const int label,
     Datum* datum) {
   return ReadImageToDatum(filename, label, 0, 0, datum);
 }
+
+bool DecodeImageToDatum(const char *data, int size, cv::Mat &cv_img, const int label,
+    const int height, const int width, const bool is_color, Datum* datum);
 
 leveldb::Options GetLevelDBOptions();
 

@@ -169,8 +169,9 @@ LIBRARIES += glog gflags protobuf leveldb snappy \
 	lmdb \
 	boost_system \
 	boost_filesystem \
+	boost_iostreams \
 	hdf5_hl hdf5 \
-	opencv_core opencv_highgui opencv_imgproc pthread 
+	pthread 
 PYTHON_LIBRARIES := boost_python python2.7
 WARNINGS := -Wall -Wno-sign-compare
 
@@ -317,7 +318,8 @@ NVCCFLAGS += -ccbin=$(CXX) -Xcompiler -fPIC $(COMMON_FLAGS)
 MATLAB_CXXFLAGS := $(CXXFLAGS) -Wno-uninitialized
 LINKFLAGS += -fPIC $(COMMON_FLAGS) $(WARNINGS)
 LDFLAGS += $(foreach librarydir,$(LIBRARY_DIRS),-L$(librarydir)) \
-		$(foreach library,$(LIBRARIES),-l$(library))
+		$(foreach library,$(LIBRARIES),-l$(library)) \
+		$(shell pkg-config --libs opencv)
 PYTHON_LDFLAGS := $(LDFLAGS) $(foreach library,$(PYTHON_LIBRARIES),-l$(library))
 
 # 'superclean' target recursively* deletes all files ending with an extension

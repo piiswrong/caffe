@@ -75,16 +75,16 @@ void GMMLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     for (int j = 0; j < N_; j++) {
       Dtype sigma2 = cpu_sigma2[j];
       Dtype pi = cpu_pi[j];
-      Dtype weight = pi*std::exp(-cpu_distance[i*N_+j]/Dtype(2)/sigma2 - K_/Dtype(2)*std::log(sigma2));
+      Dtype weight = pi*std::exp(-cpu_distance[i*N_+j]/Dtype(2)/sigma2);// - K_/Dtype(2)*std::log(sigma2));
       cpu_mask[i*N_+j] = weight/sigma2;
       norm += weight;
     }
     for (int j = 0; j < N_; j++) {
-      cpu_mask[i*N_+j] /= norm;
+      //cpu_mask[i*N_+j] /= norm;
       cpu_coefm[i] += cpu_mask[i*N_+j];
       cpu_coefn[j] += cpu_mask[i*N_+j];
     }
-    loss -= std::log(norm);
+    loss -= norm;
   }
 
 

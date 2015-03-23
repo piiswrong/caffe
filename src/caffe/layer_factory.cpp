@@ -265,6 +265,10 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new GMMLossLayer<Dtype>(param);
   case LayerParameter_LayerType_MULTI_SOFTMAX_LOSS:
     return new MultiSoftmaxLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_JPEG_DATA:
+    return new JPEGDataLayer<Dtype>(param);
+  case LayerParameter_LayerType_RESIZE:
+    return new ResizeLayer<Dtype>(param);
   case LayerParameter_LayerType_NONE:
     LOG(FATAL) << "Layer " << name << " has unspecified type.";
   default:

@@ -3,6 +3,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
 #include <leveldb/db.h>
+#include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/highgui/highgui_c.h>
@@ -81,6 +82,50 @@ bool ReadImageToDatum(const string& filename, const int label,
     cv::resize(cv_img_origin, cv_img, cv::Size(width, height));
   } else {
     cv_img = cv_img_origin;
+  }
+
+  int num_channels = (is_color ? 3 : 1);
+  datum->set_channels(num_channels);
+  datum->set_height(cv_img.rows);
+  datum->set_width(cv_img.cols);
+  datum->set_label(label);
+  datum->clear_data();
+  datum->clear_float_data();
+  string* datum_string = datum->mutable_data();
+  if (is_color) {
+    for (int c = 0; c < num_channels; ++c) {
+      for (int h = 0; h < cv_img.rows; ++h) {
+        for (int w = 0; w < cv_img.cols; ++w) {
+          datum_string->push_back(
+            static_cast<char>(cv_img.at<cv::Vec3b>(h, w)[c]));
+        }
+      }
+    }
+  } else {  // Faster than repeatedly testing is_color for each pixel w/i loop
+    for (int h = 0; h < cv_img.rows; ++h) {
+      for (int w = 0; w < cv_img.cols; ++w) {
+        datum_string->push_back(
+          static_cast<char>(cv_img.at<uchar>(h, w)));
+        }
+      }
+  }
+  return true;
+}
+
+bool DecodeImageToDatum(const char *data, int size, cv::Mat &cv_img, const int label,
+    const int height, const int width, const bool is_color, Datum* datum) {
+  int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :
+    CV_LOAD_IMAGE_GRAYSCALE);
+
+  cv::Mat data_mat(1, size, CV_8U, (void*)const_cast<char*>(data));
+  cv::imdecode(data_mat, cv_read_flag, &cv_img);
+
+  if (!cv_img.data) {
+    LOG(ERROR) << "Could not decode image";
+    return false;
+  }
+  if ((width > 0 && cv_img.size().width != width) || (height > 0 && cv_img.size().height != height)) {
+    return false;
   }
 
   int num_channels = (is_color ? 3 : 1);

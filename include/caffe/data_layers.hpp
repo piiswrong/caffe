@@ -18,6 +18,17 @@
 #include "caffe/layer.hpp"
 #include "caffe/proto/caffe.pb.h"
 
+namespace boost {
+  namespace iostreams {
+    class mapped_file_source;
+  }
+}
+
+namespace cv {
+  class Mat;
+}
+
+
 namespace caffe {
 
 #define HDF5_DATA_DATASET_NAME "data"
@@ -153,6 +164,34 @@ class DataLayer : public BasePrefetchingDataLayer<Dtype> {
   MDB_txn* mdb_txn_;
   MDB_cursor* mdb_cursor_;
   MDB_val mdb_key_, mdb_value_;
+};
+
+
+template <typename Dtype>
+class JPEGDataLayer : public BasePrefetchingDataLayer<Dtype> {
+ public:
+  explicit JPEGDataLayer(const LayerParameter& param)
+      : BasePrefetchingDataLayer<Dtype>(param) {}
+  virtual ~JPEGDataLayer();
+  virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_JPEG_DATA;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return 2; }
+
+ protected:
+  virtual void InternalThreadEntry();
+
+  int cursor_;
+  boost::iostreams::mapped_file_source *source;
+  cv::Mat *cv_img;
+  std::vector<int> offset_;
+  std::vector<int> size_;
+  std::vector<int> label_;
 };
 
 

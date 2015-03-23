@@ -270,6 +270,8 @@ message LayerParameter {
     KMEANS_LOSS = 42;
     GMM_LOSS = 43;
     MULTI_SOFTMAX_LOSS = 44;
+    JPEG_DATA = 45;
+    RESIZE = 46;
   }
   optional LayerType type = 5; // the layer type from the enum above
 
@@ -332,6 +334,8 @@ message LayerParameter {
   optional KmeansLossParameter kmeans_loss_param = 45;
   optional GMMLossParameter gmm_loss_param = 46;
   optional MultiSoftmaxLossParameter multi_softmax_loss_param = 47;
+  optional JPEGDataParameter jpeg_data_param = 48;
+  optional ResizeParameter resize_param = 49;
 
   // Parameters for data pre-processing.
   optional TransformationParameter transform_param = 36;
@@ -451,6 +455,17 @@ message DataParameter {
   // DEPRECATED. See TransformationParameter. Specify if we want to randomly mirror
   // data.
   optional bool mirror = 6 [default = false];
+}
+
+message JPEGDataParameter {
+  // Specify the data source.
+  optional string source = 1;
+
+  optional string info = 2;
+  // Specify the batch size.
+  optional uint32 batch_size = 3;
+
+  optional bool is_color = 4;
 }
 
 // Message that stores parameters used by ShufflingDataLayer
@@ -670,6 +685,11 @@ message PoolingParameter {
     CUDNN = 2;
   }
   optional Engine engine = 11 [default = DEFAULT];
+}
+
+message ResizeParameter {
+  optional uint32 top_width = 1;
+  optional uint32 top_height = 2;
 }
 
 // Message that stores parameters used by PowerLayer
