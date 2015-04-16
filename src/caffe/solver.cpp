@@ -186,6 +186,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
 
     const bool display = param_.display() && iter_ % param_.display() == 0;
     net_->set_debug_info(display && param_.debug_info());
+    net_->set_sample_print(display && param_.debug_info() && param_.sample_print());
     Dtype loss = net_->ForwardBackward(bottom_vec);
     if (display) {
       LOG(INFO) << "Iteration " << iter_ << ", loss = " << loss;

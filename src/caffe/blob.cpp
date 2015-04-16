@@ -246,6 +246,33 @@ string Blob<Dtype>::stat_diff(Dtype *min, Dtype *max, Dtype *mean, Dtype *std) c
 }
 
 
+
+template <typename Dtype>
+void Blob<Dtype>::sample_data(int n, int m) const {
+  const Dtype *data = cpu_data();
+  int N = num();
+  int M = count()/num();
+  for (int i = 0; i < n && i < N; i++) {
+    for (int j = 0; j < m && j < M; j++) {
+      std::cout << data[i*M+j] << " ";
+    }
+    std::cout << "\n";
+  }
+}
+
+template <typename Dtype>
+void Blob<Dtype>::sample_diff(int n, int m) const {
+  const Dtype *data = cpu_diff();
+  int N = num();
+  int M = count()/num();
+  for (int i = 0; i < n && i < N; i++) {
+    for (int j = 0; j < m && j < M; j++) {
+      std::cout << data[i*M+j] << " ";
+    }
+    std::cout << "\n";
+  }
+}
+
 template <typename Dtype>
 void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
   if (num_ != source.num() || channels_ != source.channels() ||

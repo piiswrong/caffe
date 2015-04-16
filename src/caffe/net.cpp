@@ -588,6 +588,7 @@ void Net<Dtype>::ForwardDebugInfo(const int layer_id) {
     LOG(INFO) << "    [Forward] "
        << "Layer " << layer_names_[layer_id] << ", top blob " << blob_name
        << " data: ";
+    if (sample_print_) blob.sample_data(10,10);
     LOG(INFO) << "    [Forward]" << " min:" << min << " max:" << max << " mean:" << mean << " std:" << std;
   }
 }
@@ -716,10 +717,10 @@ void Net<Dtype>::CopyTrainedLayersFrom(const NetParameter& param) {
     CHECK_EQ(target_blobs.size(), source_layer.blobs_size())
         << "Incompatible number of blobs for layer " << source_layer_name;
     for (int j = 0; j < target_blobs.size(); ++j) {
-      CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num());
-      CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels());
-      CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height());
-      CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width());
+      CHECK_EQ(target_blobs[j]->num(), source_layer.blobs(j).num()) << "Layer " << source_layer_name << " Blob " << j;
+      CHECK_EQ(target_blobs[j]->channels(), source_layer.blobs(j).channels()) << "Layer " << source_layer_name << " Blob " << j;
+      CHECK_EQ(target_blobs[j]->height(), source_layer.blobs(j).height()) << "Layer " << source_layer_name << " Blob " << j;
+      CHECK_EQ(target_blobs[j]->width(), source_layer.blobs(j).width()) << "Layer " << source_layer_name << " Blob " << j;
       target_blobs[j]->FromProto(source_layer.blobs(j));
     }
   }

@@ -203,6 +203,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new DummyDataLayer<Dtype>(param);
   case LayerParameter_LayerType_EUCLIDEAN_LOSS:
     return new EuclideanLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_L1_LOSS:
+    return new L1LossLayer<Dtype>(param);
   case LayerParameter_LayerType_ELTWISE:
     return new EltwiseLayer<Dtype>(param);
   case LayerParameter_LayerType_FLATTEN:
@@ -269,6 +271,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new JPEGDataLayer<Dtype>(param);
   case LayerParameter_LayerType_RESIZE:
     return new ResizeLayer<Dtype>(param);
+  case LayerParameter_LayerType_T_LOSS:
+    return new TLossLayer<Dtype>(param);
   case LayerParameter_LayerType_NONE:
     LOG(FATAL) << "Layer " << name << " has unspecified type.";
   default:

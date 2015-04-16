@@ -36,7 +36,9 @@ class DataTransformer {
    *    written at the appropriate place within the blob's data.
    */
   void Transform(const int batch_item_id, const Datum& datum,
-                 const Dtype* mean, Dtype* transformed_data);
+                 const Dtype* mean, Dtype* transformed_data, 
+                 int *h_off = NULL, int *w_off = NULL, 
+                 bool *mirrored = NULL);
 
  protected:
   virtual unsigned int Rand();

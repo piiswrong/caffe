@@ -303,6 +303,41 @@ class EuclideanLossLayer : public LossLayer<Dtype> {
 };
 
 template <typename Dtype>
+class L1LossLayer : public LossLayer<Dtype> {
+ public:
+  explicit L1LossLayer(const LayerParameter& param)
+      : LossLayer<Dtype>(param), diff_() {}
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_L1_LOSS;
+  }
+
+  /**
+   * Unlike most loss layers, in the L1LossLayer we can backpropagate
+   * to both inputs -- override to return true and always allow force_backward.
+   */
+  virtual inline bool AllowForceBackward(const int bottom_index) const {
+    return true;
+  }
+
+ protected:
+  /// @copydoc L1LossLayer
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  Blob<Dtype> diff_;
+};
+
+template <typename Dtype>
 class CrossLossLayer : public LossLayer<Dtype> {
  public:
   explicit CrossLossLayer(const LayerParameter& param)
@@ -478,6 +513,55 @@ class GMMLossLayer : public Layer<Dtype> {
   virtual inline bool AutoTopBlobs() const { return true; }
   virtual inline LayerParameter_LayerType type() const {
     return LayerParameter_LayerType_GMM_LOSS;
+  }
+
+  Blob<Dtype> *distance() { return &distance_; }
+
+ protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  static const int TILE_DIM = 32;
+
+  int N_, K_;
+  bool sign_;
+
+  Dtype lambda_;
+  
+
+  Blob<Dtype> distance_;
+  Blob<Dtype> mask_;
+  Blob<Dtype> coefm_;
+  Blob<Dtype> coefn_;
+  Blob<Dtype> count_;
+  Blob<Dtype> diff_;
+  Blob<Dtype> mean_;
+
+};
+
+
+template <typename Dtype>
+class TLossLayer : public Layer<Dtype> {
+ public:
+  explicit TLossLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual void LayerSetUp(
+      const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top);
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline int ExactNumBottomBlobs() const { return 2; }
+  virtual inline int ExactNumTopBlobs() const { return 4; }
+  virtual inline bool AutoTopBlobs() const { return true; }
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_T_LOSS;
   }
 
   Blob<Dtype> *distance() { return &distance_; }

@@ -112,6 +112,9 @@ class Blob {
   /// @brief Compute the statistics of the diff.
   string stat_diff(Dtype *min = NULL, Dtype *max = NULL, Dtype *mean = NULL, Dtype *std = NULL) const;
 
+  void sample_data(int n, int m) const;
+  void sample_diff(int n, int m) const;
+
   /**
    * @brief Set the data_ shared_ptr to point to the SyncedMemory holding the
    *        data_ of Blob other -- useful in Layer&s which simply perform a copy

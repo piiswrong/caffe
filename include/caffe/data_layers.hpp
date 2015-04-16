@@ -189,9 +189,9 @@ class JPEGDataLayer : public BasePrefetchingDataLayer<Dtype> {
   int cursor_;
   boost::iostreams::mapped_file_source *source;
   cv::Mat *cv_img;
-  std::vector<int> offset_;
-  std::vector<int> size_;
-  std::vector<int> label_;
+  std::vector<uint64_t> offset_;
+  std::vector<uint64_t> size_;
+  std::vector<int64_t> label_;
 };
 
 

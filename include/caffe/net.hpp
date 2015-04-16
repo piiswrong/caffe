@@ -146,6 +146,7 @@ class Net {
   const shared_ptr<Layer<Dtype> > layer_by_name(const string& layer_name);
 
   void set_debug_info(const bool value) { debug_info_ = value; }
+  void set_sample_print(const bool value) { sample_print_ = value; }
 
   // Helpers for Init.
   /**
@@ -224,6 +225,7 @@ class Net {
   size_t memory_used_;
   /// Whether to compute and display debug info for the net.
   bool debug_info_;
+  bool sample_print_;
 
   DISABLE_COPY_AND_ASSIGN(Net);
 };

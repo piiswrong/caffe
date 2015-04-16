@@ -64,7 +64,7 @@ message NetParameter {
 // NOTE
 // Update the next available ID when you add a new SolverParameter field.
 //
-// SolverParameter next available ID: 33 (last added: test_initialization)
+// SolverParameter next available ID: 34 (last added: test_initialization)
 message SolverParameter {
   //////////////////////////////////////////////////////////////////////////////
   // Specifying the train and test networks
@@ -158,6 +158,8 @@ message SolverParameter {
 
   // If false, don't save a snapshot after training finishes.
   optional bool snapshot_after_train = 28 [default = true];
+
+  optional bool sample_print = 33 [default = false];
 }
 
 // A message that stores the solver snapshots
@@ -272,6 +274,8 @@ message LayerParameter {
     MULTI_SOFTMAX_LOSS = 44;
     JPEG_DATA = 45;
     RESIZE = 46;
+    T_LOSS = 47;
+    L1_LOSS = 48;
   }
   optional LayerType type = 5; // the layer type from the enum above
 
@@ -336,6 +340,7 @@ message LayerParameter {
   optional MultiSoftmaxLossParameter multi_softmax_loss_param = 47;
   optional JPEGDataParameter jpeg_data_param = 48;
   optional ResizeParameter resize_param = 49;
+  optional TLossParameter t_loss_param = 50;
 
   // Parameters for data pre-processing.
   optional TransformationParameter transform_param = 36;
@@ -363,6 +368,9 @@ message TransformationParameter {
   // Specify if we would like to randomly crop an image.
   optional uint32 crop_size = 3 [default = 0];
   optional string mean_file = 4;
+  optional int32 soffset = 5 [default = 0];
+  optional int32 eoffset = 6 [default = 0];
+  optional bool convert_to_grey = 7 [default = false];
 }
 
 // Message that stores parameters used by AccuracyLayer
@@ -466,6 +474,12 @@ message JPEGDataParameter {
   optional uint32 batch_size = 3;
 
   optional bool is_color = 4;
+
+  optional bool compute_label = 5 [default = false];
+
+  optional int32 label_start = 6;
+
+  optional int32 label_stride = 7;
 }
 
 // Message that stores parameters used by ShufflingDataLayer
@@ -631,6 +645,14 @@ message GMMLossParameter {
   optional FillerParameter weight_filler = 4;
 }
 
+message TLossParameter {
+  optional uint32 num_center = 1;
+  optional float lambda = 2 [default = 1.0];
+  optional float beta = 3 [default = 1.0];
+  optional float bandwidth = 5 [default = 1.0];
+  optional FillerParameter weight_filler = 4;
+}
+
 // Message that stores parameters used by LRNLayer
 message LRNParameter {
   optional uint32 local_size = 1 [default = 5];
@@ -714,6 +736,7 @@ message ReLUParameter {
     CUDNN = 2;
   }
   optional Engine engine = 2 [default = DEFAULT];
+  optional bool positive_half = 3 [default = true];
 }
 
 // Message that stores parameters used by SigmoidLayer
