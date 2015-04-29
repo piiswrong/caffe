@@ -56,7 +56,7 @@ void TLossLayer<Dtype>::Reshape(
   (*top)[2]->Reshape(bottom[0]->num(), 1, 1, 1);
   if (this->layer_param_.loss_weight_size() == 2)
     this->layer_param_.add_loss_weight(Dtype(0));
-  (*top)[3]->Reshape(bottom[0]->num(), 1, 1, 1);
+  (*top)[3]->Reshape(bottom[0]->num(), N_, 1, 1);
   if (this->layer_param_.loss_weight_size() == 3)
     this->layer_param_.add_loss_weight(Dtype(0));
 

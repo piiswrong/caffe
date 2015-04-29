@@ -64,7 +64,7 @@ message NetParameter {
 // NOTE
 // Update the next available ID when you add a new SolverParameter field.
 //
-// SolverParameter next available ID: 34 (last added: test_initialization)
+// SolverParameter next available ID: 35 (last added: test_initialization)
 message SolverParameter {
   //////////////////////////////////////////////////////////////////////////////
   // Specifying the train and test networks
@@ -119,6 +119,7 @@ message SolverParameter {
   optional float gamma = 9; // The parameter to compute the learning rate.
   optional float power = 10; // The parameter to compute the learning rate.
   optional float momentum = 11; // The momentum value.
+  optional int32 momentum_burnin = 34 [default = 0];
   optional float weight_decay = 12; // The weight decay.
   // regularization types supported: L1 and L2
   // controlled by weight_decay
@@ -276,6 +277,7 @@ message LayerParameter {
     RESIZE = 46;
     T_LOSS = 47;
     L1_LOSS = 48;
+    SOFTMAX_ENTROPY_LOSS = 49;
   }
   optional LayerType type = 5; // the layer type from the enum above
 
@@ -650,6 +652,7 @@ message TLossParameter {
   optional float lambda = 2 [default = 1.0];
   optional float beta = 3 [default = 1.0];
   optional float bandwidth = 5 [default = 1.0];
+  optional float alpha = 6 [default = 1.0];
   optional FillerParameter weight_filler = 4;
 }
 

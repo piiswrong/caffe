@@ -56,12 +56,15 @@ void TLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 	Dtype *cpu_mask = mask_.mutable_cpu_data();
   Dtype *cpu_coefm = coefm_.mutable_cpu_data();
   Dtype *cpu_coefn = coefn_.mutable_cpu_data();
-	Dtype *cpu_min_distance = (*top)[3]->mutable_cpu_data();
+	Dtype *cpu_proba = (*top)[3]->mutable_cpu_data();
   Dtype *cpu_ind = (*top)[2]->mutable_cpu_data();
   Dtype *cpu_count = count_.mutable_cpu_data();
 
   Dtype beta = this->layer_param_.t_loss_param().beta();
   Dtype bandwidth = this->layer_param_.t_loss_param().bandwidth();
+  Dtype alpha = this->layer_param_.t_loss_param().alpha();
+  Dtype alpha_exp =  Dtype((alpha+1.0)/2.0);
+  Dtype alpha_weight = Dtype((alpha+1.0)/alpha);
 
 	Dtype loss = Dtype(0);
   //Dtype acc = Dtype(0);
@@ -80,8 +83,8 @@ void TLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
         mymin = cpu_distance[i*N_+j];
         ind = j;
       }
-      Dtype weight = Dtype(1)/(Dtype(1)+cpu_distance[i*N_+j]);
-      norm += weight;
+      Dtype weight = Dtype(1)/(Dtype(1)+cpu_distance[i*N_+j]/alpha);
+      norm += std::pow(weight, alpha_exp);
       sqr_norm += weight*weight;
       cpu_mask[i*N_+j] = weight;
     }
@@ -89,8 +92,9 @@ void TLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     //bool selected = true;// cpu_mask[i*N_+ind]/norm > cpu_sigma2[ind];
     //Dtype pmax = cpu_mask[i*N_+ind]/norm;
     for (int j = 0; j < N_; j++) {
-      Dtype qij = cpu_mask[i*N_+j]/norm;
+      Dtype qij = std::pow(cpu_mask[i*N_+j], alpha_exp)/norm;
       Dtype pij = cpu_label[i*N_+j];//qij*qij/sqr_norm;
+      cpu_proba[i*N_ + j] = qij;
       /*if (selected) {
         if (j == ind) {
           pij = Dtype(1);
@@ -101,7 +105,7 @@ void TLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
         pij = ;
         
       }*/
-      cpu_mask[i*N_+j] = Dtype(2)*cpu_mask[i*N_+j]*(pij - qij);
+      cpu_mask[i*N_+j] = alpha_weight*cpu_mask[i*N_+j]*(pij - qij);
       cpu_coefm[i] += cpu_mask[i*N_+j];
       cpu_coefn[j] += cpu_mask[i*N_+j];
       loss += pij * std::log(pij/qij);
@@ -110,7 +114,7 @@ void TLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 
   (*top)[0]->mutable_cpu_data()[0] = loss/bottom[0]->num();
 
-  //std::cout << "mask: " << mask_.stat_data() << std::endl;
+  std::cout << "mask: " << mask_.stat_data() << std::endl;
   //std::cout << "acc: " << acc/bottom[0]->num() << std::endl;
   //std::cout << "count: " << count_.stat_data() << std::endl;
 }

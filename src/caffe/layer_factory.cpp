@@ -249,6 +249,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return GetSoftmaxLayer<Dtype>(name, param);
   case LayerParameter_LayerType_SOFTMAX_LOSS:
     return new SoftmaxWithLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_SOFTMAX_ENTROPY_LOSS:
+    return new SoftmaxCrossEntropyLossLayer<Dtype>(param);
   case LayerParameter_LayerType_SPLIT:
     return new SplitLayer<Dtype>(param);
   case LayerParameter_LayerType_TANH:
