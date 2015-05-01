@@ -278,6 +278,7 @@ message LayerParameter {
     T_LOSS = 47;
     L1_LOSS = 48;
     SOFTMAX_ENTROPY_LOSS = 49;
+    MULTI_T_LOSS = 50;
   }
   optional LayerType type = 5; // the layer type from the enum above
 
@@ -343,6 +344,7 @@ message LayerParameter {
   optional JPEGDataParameter jpeg_data_param = 48;
   optional ResizeParameter resize_param = 49;
   optional TLossParameter t_loss_param = 50;
+  optional MultiTLossParameter multi_t_loss_param = 51;
 
   // Parameters for data pre-processing.
   optional TransformationParameter transform_param = 36;
@@ -648,6 +650,15 @@ message GMMLossParameter {
 }
 
 message TLossParameter {
+  optional uint32 num_center = 1;
+  optional float lambda = 2 [default = 1.0];
+  optional float beta = 3 [default = 1.0];
+  optional float bandwidth = 5 [default = 1.0];
+  optional float alpha = 6 [default = 1.0];
+  optional FillerParameter weight_filler = 4;
+}
+
+message MultiTLossParameter {
   optional uint32 num_center = 1;
   optional float lambda = 2 [default = 1.0];
   optional float beta = 3 [default = 1.0];

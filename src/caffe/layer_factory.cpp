@@ -275,6 +275,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new ResizeLayer<Dtype>(param);
   case LayerParameter_LayerType_T_LOSS:
     return new TLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_MULTI_T_LOSS:
+    return new MultiTLossLayer<Dtype>(param);
   case LayerParameter_LayerType_NONE:
     LOG(FATAL) << "Layer " << name << " has unspecified type.";
   default:

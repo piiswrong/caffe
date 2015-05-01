@@ -596,6 +596,57 @@ class TLossLayer : public Layer<Dtype> {
 };
 
 template <typename Dtype>
+class MultiTLossLayer : public Layer<Dtype> {
+ public:
+  explicit MultiTLossLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual void LayerSetUp(
+      const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top);
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline int ExactNumBottomBlobs() const { return 2; }
+  virtual inline int ExactNumTopBlobs() const { return 4; }
+  virtual inline bool AutoTopBlobs() const { return true; }
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_MULTI_T_LOSS;
+  }
+
+  Blob<Dtype> *distance() { return &distance_; }
+
+ protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  static const int TILE_DIM = 32;
+
+  int N_, K_;
+  bool sign_;
+
+  Dtype lambda_;
+  
+
+  Blob<Dtype> distance_;
+  Blob<Dtype> mask_;
+  Blob<Dtype> coefm_;
+  Blob<Dtype> coefn_;
+  Blob<Dtype> count_;
+  Blob<Dtype> diff_;
+  Blob<Dtype> mean_;
+  Blob<Dtype> sigma_prod_;
+  Blob<Dtype> mu_sigma_;
+
+};
+
+
+template <typename Dtype>
 class MultiSoftmaxLossLayer : public LossLayer<Dtype> {
  public:
   explicit MultiSoftmaxLossLayer(const LayerParameter& param)

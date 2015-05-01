@@ -17,6 +17,8 @@ void Blob<Dtype>::Reshape(const int num, const int channels, const int height,
   height_ = height;
   width_ = width;
   count_ = num_ * channels_ * height_ * width_;
+  CHECK(count_ > 0) << "blob size must be greater than zero num=" << num << " channels=" 
+                    << channels_ << " height=" << height_ << " width=" << width_;
   if (count_ > capacity_) {
     capacity_ = count_;
     data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
