@@ -20,11 +20,11 @@ const int K_ = 10;
 const int N_ = 4;
 
 template <typename TypeParam>
-class MultiTLossLayerTest : public MultiDeviceTest<TypeParam> {
+class EntropyTLossLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
 
  protected:
-  MultiTLossLayerTest()
+  EntropyTLossLayerTest()
       : blob_bottom_data_(new Blob<Dtype>(M_, 1, 1, K_)),
         blob_bottom_label_(new Blob<Dtype>(M_, 1, 1, N_)),
         blob_top_loss_(new Blob<Dtype>()),
@@ -56,7 +56,7 @@ class MultiTLossLayerTest : public MultiDeviceTest<TypeParam> {
     blob_top_vec_.push_back(blob_top_ind_);
     blob_top_vec_.push_back(blob_top_dist_);
   }
-  virtual ~MultiTLossLayerTest() {
+  virtual ~EntropyTLossLayerTest() {
     delete blob_bottom_data_;
     delete blob_bottom_label_;
     delete blob_top_loss_;
@@ -70,7 +70,7 @@ class MultiTLossLayerTest : public MultiDeviceTest<TypeParam> {
     // equivalent to explicitly specifiying a weight of 1.
     LayerParameter layer_param;
     layer_param.mutable_multi_t_loss_param()->set_num_center(N_);
-    MultiTLossLayer<Dtype> layer_weight_1(layer_param);
+    EntropyTLossLayer<Dtype> layer_weight_1(layer_param);
     layer_weight_1.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
     layer_weight_1.Forward(this->blob_bottom_vec_, &this->blob_top_vec_);
 
@@ -89,7 +89,7 @@ class MultiTLossLayerTest : public MultiDeviceTest<TypeParam> {
     LayerParameter layer_param2;
     layer_param2.mutable_multi_t_loss_param()->set_num_center(N_);
     layer_param2.add_loss_weight(kLossWeight);
-    MultiTLossLayer<Dtype> layer_weight_2(layer_param2);
+    EntropyTLossLayer<Dtype> layer_weight_2(layer_param2);
     layer_weight_2.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
     layer_weight_2.Forward(this->blob_bottom_vec_, &this->blob_top_vec_);
 
@@ -134,13 +134,13 @@ class MultiTLossLayerTest : public MultiDeviceTest<TypeParam> {
   vector<Blob<Dtype>*> blob_top_vec_;
 };
 
-TYPED_TEST_CASE(MultiTLossLayerTest, TestDtypesAndDevices);
+TYPED_TEST_CASE(EntropyTLossLayerTest, TestDtypesAndDevices);
 
-TYPED_TEST(MultiTLossLayerTest, TestForward) {
+TYPED_TEST(EntropyTLossLayerTest, TestForward) {
   this->TestForward();
 }
 
-TYPED_TEST(MultiTLossLayerTest, TestGradient) {
+TYPED_TEST(EntropyTLossLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   const Dtype kLossWeight = 1.0;
@@ -148,7 +148,7 @@ TYPED_TEST(MultiTLossLayerTest, TestGradient) {
   layer_param.mutable_multi_t_loss_param()->set_num_center(N_);
 
   
-  MultiTLossLayer<Dtype> layer(layer_param);
+  EntropyTLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
   layer.Forward(this->blob_bottom_vec_, &this->blob_top_vec_);
 

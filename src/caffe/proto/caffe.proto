@@ -279,6 +279,7 @@ message LayerParameter {
     L1_LOSS = 48;
     SOFTMAX_ENTROPY_LOSS = 49;
     MULTI_T_LOSS = 50;
+    ENTROPY_T_LOSS = 51;
   }
   optional LayerType type = 5; // the layer type from the enum above
 
@@ -454,6 +455,7 @@ message DataParameter {
   // to avoid all asynchronous sgd clients to start at the same point. The skip
   // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
   // be larger than the number of keys in the leveldb.
+  optional string seek = 9 [default = ''];
   optional uint32 rand_skip = 7 [default = 0];
   optional DB backend = 8 [default = LEVELDB];
   // DEPRECATED. See TransformationParameter. For data pre-processing, we can do

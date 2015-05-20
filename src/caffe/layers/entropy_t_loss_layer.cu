@@ -8,7 +8,7 @@
 namespace caffe {
 
 template<typename Dtype, int TILE_DIM>
-__global__ void multi_t_distance_kernel(const Dtype *x, const Dtype *y, const Dtype *sigma, Dtype *z, int m, int n, int p) {
+__global__ void entropy_t_distance_kernel(const Dtype *x, const Dtype *y, const Dtype *sigma, Dtype *z, int m, int n, int p) {
     __shared__ Dtype sx[TILE_DIM][TILE_DIM+1];
     __shared__ Dtype sy[TILE_DIM][TILE_DIM+1];
     __shared__ Dtype ssigma[TILE_DIM][TILE_DIM+1];
@@ -40,7 +40,7 @@ __global__ void multi_t_distance_kernel(const Dtype *x, const Dtype *y, const Dt
 }
 
 template <typename Dtype>
-void MultiTLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+void EntropyTLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     vector<Blob<Dtype>*>* top) {
   dim3 grid((N_-1)/TILE_DIM+1, (bottom[0]->num()-1)/TILE_DIM+1, 1);
   dim3 block(TILE_DIM, TILE_DIM, 1);
@@ -51,7 +51,7 @@ void MultiTLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   Dtype *gpu_dist = distance_.mutable_gpu_data();
   int M = bottom[0]->num();
 
-  multi_t_distance_kernel<Dtype, MultiTLossLayer<Dtype>::TILE_DIM><<<grid, block>>>(gpu_input, gpu_weight, gpu_inv_sigma2, gpu_dist, M, N_, K_);
+  entropy_t_distance_kernel<Dtype, EntropyTLossLayer<Dtype>::TILE_DIM><<<grid, block>>>(gpu_input, gpu_weight, gpu_inv_sigma2, gpu_dist, M, N_, K_);
   CUDA_POST_KERNEL_CHECK;
 
   //std::cout << "dist: " << distance_.stat_data() << std::endl;
@@ -90,25 +90,22 @@ void MultiTLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   caffe_memset(N_*sizeof(Dtype), Dtype(0), cpu_count);
   for (int i = 0; i < bottom[0]->num(); i++) {
     Dtype norm = Dtype(0);
-    Dtype sqr_norm = Dtype(0);
+    Dtype l_i = Dtype(0);
     for (int j = 0; j < N_; j++) {
-      Dtype weight = Dtype(1)/(Dtype(1)+cpu_distance[i*N_+j]/alpha);
-      cpu_mask[i*N_+j] = weight;
-      weight = cpu_inv_sigma_prod[j]*std::pow(weight, alpha_exp); 
-      norm += weight;
-      sqr_norm += weight*weight;
+      cpu_mask[i*N_+j] = Dtype(1)/(Dtype(1)+cpu_distance[i*N_+j]/alpha);
+      cpu_proba[i*N_ + j] = cpu_inv_sigma_prod[j]*std::pow(cpu_mask[i*N_+j], alpha_exp); 
+      norm += cpu_proba[i*N_ + j];
     }
-    sqr_norm /= norm*norm;
     for (int j = 0; j < N_; j++) {
-      Dtype qij = cpu_inv_sigma_prod[j]*std::pow(cpu_mask[i*N_+j], alpha_exp)/norm;
-      cpu_proba[i*N_ + j] = qij;
-      Dtype pij = cpu_label[i*N_+j];
-      //Dtype pij = qij*qij/sqr_norm;
-      cpu_mask[i*N_+j] = alpha_weight*cpu_mask[i*N_+j]*(pij - qij);
+      cpu_proba[i*N_ + j] /= norm;
+      l_i += - cpu_proba[i*N_ + j]*std::log(cpu_proba[i*N_ + j]);
+    }
+    for (int j = 0; j < N_; j++) {
+      cpu_mask[i*N_+j] = alpha_weight*(std::log(cpu_proba[i*N_ + j]) + l_i)*cpu_proba[i*N_ + j]*cpu_mask[i*N_+j];
       cpu_coefm[i] += cpu_mask[i*N_+j];
       cpu_coefn[j] += cpu_mask[i*N_+j];
-      loss += pij * std::log(pij/qij);
     }
+    loss += l_i;
   }
 
   (*top)[0]->mutable_cpu_data()[0] = loss/bottom[0]->num();
@@ -123,7 +120,7 @@ void MultiTLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-void MultiTLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
+void EntropyTLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
   Dtype weight = top[0]->cpu_diff()[0]/(*bottom)[0]->num();		
   if (propagate_down[0]) {
@@ -147,6 +144,6 @@ void MultiTLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   }
 }
 
-INSTANTIATE_CLASS(MultiTLossLayer);
+INSTANTIATE_CLASS(EntropyTLossLayer);
 
 }  // namespace caffe

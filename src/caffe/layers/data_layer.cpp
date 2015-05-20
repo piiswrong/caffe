@@ -74,6 +74,22 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     LOG(FATAL) << "Unknown database backend";
   }
 
+  if (this->layer_param_.data_param().seek() != "") {
+    switch (this->layer_param_.data_param().backend()) {
+    case DataParameter_DB_LEVELDB:
+      iter_->Seek(this->layer_param_.data_param().seek());
+      break;
+    case DataParameter_DB_LMDB:
+      LOG(FATAL) << "Unsupported operation seek with LMDB";
+      //CHECK_EQ(mdb_cursor_get(mdb_cursor_, &this->layer_param_.data_param().seek(), &mdb_value_, MDB_SET), MDB_SUCCESS)
+      //  << "Cannot find key " << this->layer_param_.data_param().seek();
+      //mdb_key_ = this->layer_param_.data_param().seek();
+      break;
+    default:
+      LOG(FATAL) << "Unknown database backend";
+    }
+  }
+
   // Check if we would need to randomly skip a few data points
   if (this->layer_param_.data_param().rand_skip()) {
     unsigned int skip = caffe_rng_rand() %
