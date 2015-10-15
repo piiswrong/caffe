@@ -67,6 +67,7 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
   }
   iter_ = 0;
   current_step_ = 0;
+  Caffe::set_iter(&iter_);
 }
 
 template <typename Dtype>
@@ -590,13 +591,20 @@ void SGDSolver<Dtype>::ApplyUpdate() {
     LOG(INFO) << "Iteration " << this->iter_ << ", lr = " << rate;
   }
   ClipGradients();
+  const vector<int>& cycle_length = this->net_->params_cycle_length();
+  const vector<pair<int,int> >& cycle_interval =
+        this->net_->params_cycle_interval();
   for (int param_id = 0; param_id < this->net_->learnable_params().size();
        ++param_id) {
-    Normalize(param_id);
-    Regularize(param_id);
-    ComputeUpdateValue(param_id, rate);
+    int pos = this->iter_%cycle_length[param_id];
+    if (pos >= cycle_interval[param_id].first &&
+        pos < cycle_interval[param_id].second) {
+      Normalize(param_id);
+      Regularize(param_id);
+      ComputeUpdateValue(param_id, rate);
+      this->net_->learnable_params()[param_id]->Update();
+    }
   }
-  this->net_->Update();
 }
 
 template <typename Dtype>

@@ -296,12 +296,17 @@ message ParamSpec {
 
   // The multiplier on the global weight decay for this parameter.
   optional float decay_mult = 4 [default = 1.0];
+
+  optional int32 cycle_length = 5 [default = 1];
+
+  optional int32 cycle_from = 6 [default = 0];
+  optional int32 cycle_to = 7 [default = 1];
 }
 
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 139 (last added: tile_param)
+// LayerParameter next available layer-specific ID: 140 (last added: resize_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -385,6 +390,7 @@ message LayerParameter {
   optional ThresholdParameter threshold_param = 128;
   optional TileParameter tile_param = 138;
   optional WindowDataParameter window_data_param = 129;
+  optional ResizeParameter resize_param = 139;
 }
 
 // Message that stores parameters used to apply transformation
@@ -1202,4 +1208,9 @@ message PReLUParameter {
   optional FillerParameter filler = 1;
   // Whether or not slope paramters are shared across channels.
   optional bool channel_shared = 2 [default = false];
+}
+
+message ResizeParameter {
+  optional uint32 top_width = 1;
+  optional uint32 top_height = 2;
 }

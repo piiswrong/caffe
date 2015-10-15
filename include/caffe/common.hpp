@@ -89,6 +89,7 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
+
 // A global initialization function that you should call in your main function.
 // Currently it initializes google flags and google logging.
 void GlobalInit(int* pargc, char*** pargv);
@@ -154,6 +155,8 @@ class Caffe {
   inline static void set_solver_count(int val) { Get().solver_count_ = val; }
   inline static bool root_solver() { return Get().root_solver_; }
   inline static void set_root_solver(bool val) { Get().root_solver_ = val; }
+  inline static int iter() { return Get().iter_ == NULL ? 0 : *Get().iter_; }
+  inline static void set_iter(int* iter) { Get().iter_ = iter; }
 
  protected:
 #ifndef CPU_ONLY
@@ -165,6 +168,7 @@ class Caffe {
   Brew mode_;
   int solver_count_;
   bool root_solver_;
+  int* iter_;
 
  private:
   // The private constructor to avoid duplicate instantiation.
